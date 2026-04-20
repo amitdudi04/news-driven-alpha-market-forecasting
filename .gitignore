@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Logs
+*.log
+dashboard_errors.log
+institutional_dashboard.log
+
+# Streamlit/IDE
+.streamlit/
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
