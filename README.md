@@ -1,32 +1,116 @@
-# News-Driven Alpha: Chinese Equity Markets
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.13-blue)
+# News-Driven Alpha for Financial Market Forecasting
 
-An institutional-grade paper trading infrastructure utilizing NLP-derived sentiment (ProsusAI FinBERT) applied to GDELT global news streams to forecast directional volatility regimes in the CSI 300 index.
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.13-blue)
+
+A machine learning pipeline that integrates financial news sentiment, market data, and regime-aware modeling to generate daily market forecasts and paper trading signals. The system combines FinBERT sentiment analysis, GDELT news data, feature engineering, and XGBoost-based classification within a reproducible forecasting workflow.
+
+---
 
 ## Motivation
-Traditional asset pricing models often fail to rapidly assimilate unstructured geopolitical and macroeconomic news flow. This platform serves as a deterministic execution engine that algorithmically translates raw linguistic sentiment into statistically governed, walk-forward evaluated trading signals.
 
-## Architecture & Pipeline
-The architecture consists of 14 strictly governed sequential modules:
-1. **News Extraction** (GDELT API)
-2. **Sentiment Analysis** (FinBERT)
-3. **Market Data** (yfinance)
-4. **Feature Engineering** (Rolling percentiles, IC filtering)
-5. **Multi-Model Inference** (XGBoost Regime-Switching)
-6. **Execution Engine** (SAFE MODE, Entropy Thresholding)
+Financial markets react rapidly to macroeconomic events, geopolitical developments, and breaking news. Traditional quantitative models often struggle to incorporate unstructured textual information in real time.
+
+This project investigates whether financial news sentiment can improve short-term market forecasting by combining natural language processing, market features, and machine learning in an end-to-end prediction pipeline.
+
+---
+
+## Key Features
+
+- Financial news ingestion using the GDELT API
+- Sentiment analysis using ProsusAI FinBERT
+- Market data collection using yfinance
+- Automated feature engineering pipeline
+- Regime-aware XGBoost prediction model
+- Daily inference and signal generation
+- Streamlit dashboard for monitoring
+- Paper trading workflow
+- Regression testing for reproducibility
+
+---
+
+## Architecture
+
+The forecasting pipeline consists of the following stages:
+
+1. News Extraction (GDELT API)
+2. Financial Sentiment Analysis (FinBERT)
+3. Market Data Collection (yfinance)
+4. Feature Engineering
+5. XGBoost-Based Forecasting
+6. Signal Generation
+7. Dashboard & Monitoring
+
+---
+
+## Technology Stack
+
+- Python
+- Pandas
+- NumPy
+- Scikit-learn
+- XGBoost
+- FinBERT
+- GDELT API
+- yfinance
+- Streamlit
+
+---
 
 ## Quick Start
+
 ```bash
 # Clone repository
-git clone https://github.com/username/news-driven-alpha.git
-cd news-driven-alpha
+git clone https://github.com/amitdudi04/amitdudi04-news-driven-alpha-market-forecasting.git
 
-# Install requirements
+# Enter project folder
+cd amitdudi04-news-driven-alpha-market-forecasting
+
+# Install dependencies
 pip install -r requirements.txt
 
-# Run deterministic pipeline
+# Run the forecasting pipeline
 python run_daily_pipeline.py
+
+# Launch dashboard
+streamlit run app.py
 ```
 
+---
+
+## Repository Structure
+
+```
+config/
+data/
+docs/
+models/
+outputs/
+
+module1_news.py
+module2_sentiment.py
+module3_market.py
+module4_features.py
+module5_xgboost.py
+module12_inference.py
+module13_signal_engine.py
+module14_live_monitoring.py
+
+run_daily_pipeline.py
+app.py
+```
+
+---
+
 ## Known Limitations
-The walk-forward evaluation is constrained by API ingestion limits restricting the pure chronological holdout to 104 trading days (21 out-of-sample days). Extreme statistical limitations apply. **Authorized for Paper Trading Only.**
+
+- Sentiment extraction currently relies on FinBERT and does not include Chinese-language financial language models.
+- Evaluation is based on a limited out-of-sample paper trading period.
+- This project is intended for research, educational purposes, and paper trading evaluation. It should not be interpreted as investment advice or a production trading system.
+
+---
+
+## License
+
+This project is licensed under the MIT License.
