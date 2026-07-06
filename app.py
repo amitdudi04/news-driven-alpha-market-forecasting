@@ -1,3 +1,5 @@
+import sys
+import os
 import streamlit as st
 from transformers import pipeline
 import yfinance as yf
@@ -6,8 +8,6 @@ import numpy as np
 import joblib
 import plotly.graph_objects as go
 import os
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules'))
 import logging
 import json
 import hashlib

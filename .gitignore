@@ -1,23 +1,118 @@
-# Byte-compiled / optimized / DLL files
+# ===========================
+# Python
+# ===========================
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
 
-# Virtual environments
+# ===========================
+# Virtual Environments
+# ===========================
 venv/
 .venv/
 env/
 ENV/
 
-# Logs
-*.log
-dashboard_errors.log
-institutional_dashboard.log
+# ===========================
+# Environment Variables
+# ===========================
+.env
+.env.local
 
-# Streamlit/IDE
-.streamlit/
+# Keep template
+!.env.template
+
+# ===========================
+# IDE
+# ===========================
 .vscode/
 .idea/
 
-# macOS
+# ===========================
+# Streamlit
+# ===========================
+.streamlit/
+
+# ===========================
+# Operating System
+# ===========================
 .DS_Store
+Thumbs.db
+
+# ===========================
+# Logs
+# ===========================
+*.log
+*.out
+*.err
+dashboard_errors.log
+institutional_dashboard.log
+
+# ===========================
+# Runtime Outputs
+# (Generated every pipeline run)
+# ===========================
+outputs/daily_prediction.csv
+outputs/live_tracking.csv
+outputs/live_inference.csv
+outputs/daily_operational_state.json
+outputs/news_ingestion_manifest.csv
+outputs/news_quality_manifest.csv
+outputs/rolling_surveillance_manifest.csv
+
+# Keep sample outputs only
+!outputs/sample_daily_prediction.csv
+!outputs/sample_live_tracking.csv
+!outputs/sample_daily_operational_state.json
+
+# ===========================
+# Runtime Logs
+# ===========================
+logs/*.csv
+logs/*.jsonl
+logs/*.log
+
+# ===========================
+# Scratch / Temporary
+# ===========================
+scratch/
+*.tmp
+*.bak
+
+# ===========================
+# Jupyter
+# ===========================
+.ipynb_checkpoints/
+
+# ===========================
+# pytest
+# ===========================
+.pytest_cache/
+
+# ===========================
+# mypy
+# ===========================
+.mypy_cache/
+
+# ===========================
+# Distribution
+# ===========================
+build/
+dist/
+*.egg-info/
+
+# ===========================
+# Archive
+# (Keep local only)
+# ===========================
+archive/
+
+# ===========================
+# Large model artifacts
+# (Ignore only if users download separately)
+# Uncomment if desired
+# ===========================
+# models/*.pkl
+# !models/README.md

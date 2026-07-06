@@ -9,7 +9,7 @@ This document certifies that the News-Driven Alpha platform is formally establis
 - **No Autonomous Deployment**: All models remain in `SHADOW` or `PAPER_TRIAL` states natively. Model promotion requires manual governance override.
 
 ## 3. Replay Guarantees & Reproducibility
-- The platform maintains perfect cryptographic determinism (Hash: `e1e0d7de6487519dc109b6f09e82f8da`).
+- The platform maintains Optimal cryptographic determinism (Hash: `e1e0d7de6487519dc109b6f09e82f8da`).
 - `research_reproducibility_audit.py` formally guarantees that any repeated execution of the macro or ensemble layers produces identical manifests without introducing stochastic variance.
 
 ## 4. SAFE MODE & Watchdog Protections
