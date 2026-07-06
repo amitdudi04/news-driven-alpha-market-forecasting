@@ -1,0 +1,2 @@
+timestamp,cpu_percent,memory_percent,watchdog_state,safe_mode_trigger_count,pipeline_latency_sec
+2026-06-01T23:27:19.210017,11.4,81.4,HEALTHY,0,0.0

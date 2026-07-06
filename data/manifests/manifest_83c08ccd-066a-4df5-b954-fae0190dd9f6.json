@@ -1,0 +1,25 @@
+{
+    "execution_uuid": "83c08ccd-066a-4df5-b954-fae0190dd9f6",
+    "dataset_hashes": {
+        "news_daily.csv": "80d62804338a75eb1101840ebcca0b33",
+        "csi300_features.csv": "ee9b36bb743235f29c331a8c19f0f5f0"
+    },
+    "exchange_state_hash": "a6679e2a2e0420a122a8776adc47bde3",
+    "feature_snapshot_hash": "ee9b36bb743235f29c331a8c19f0f5f0",
+    "config_hash": "2cdcfd7c1efb20416bcacb70caa20361",
+    "model_version": "1.0.0-rc.1",
+    "scaler_version": "1.0.0",
+    "model_hash": "7513d0bff13e467686739f40df7c59ff",
+    "prediction_timestamp": "2026-07-06T14:12:37.455052",
+    "authorization_snapshot": "AUTHORIZED_POST_CLOSE",
+    "inference_parameters": {
+        "model_type": "xgboost",
+        "finbert_version": "ProsusAI/finbert"
+    },
+    "pipeline_version": "3.0.0-paper-trading",
+    "runtime_environment_metadata": {
+        "python_version": "3.13.14",
+        "os": "Windows"
+    },
+    "manifest_hash": "727ec20d93410bebeaff82c8e890f6fa"
+}

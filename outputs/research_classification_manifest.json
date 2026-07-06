@@ -1,0 +1,10 @@
+{
+    "timestamp": "2026-06-01T23:17:37.727383",
+    "classification": "PAPER_TRADING_ONLY",
+    "checks": {
+        "operational_health": true,
+        "macro_isolation": true,
+        "ensemble_isolation": true,
+        "replay_determinism": true
+    }
+}

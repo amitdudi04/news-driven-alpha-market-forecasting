@@ -1,0 +1,2 @@
+Feature_Date,Direction_Prob_t+1,Meta_Prob_t+1,raw_confidence,distance_penalty,Confidence,regime,top_positive,top_negative,execution_uuid
+2026-07-06,0.6666666865348816,0.6000000238418579,1.0,0.6995324644815464,0.6995324644815464,HIGH_VOL,{},{},a6b6211a-c8ef-40e5-8b73-86e5db3b7ff9

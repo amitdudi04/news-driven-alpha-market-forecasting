@@ -1,0 +1,9 @@
+{
+    "timestamp": "2026-06-01T23:27:20.732983",
+    "global_status": "HEALTHY",
+    "subsystems": {
+        "telemetry": "HEALTHY",
+        "alerts": "HEALTHY",
+        "watchdog": "HEALTHY"
+    }
+}

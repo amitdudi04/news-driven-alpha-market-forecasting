@@ -1,0 +1,16 @@
+{
+    "model_uuid": "0d1b7dce-4b99-4387-b93f-4d263ab18f38",
+    "training_timestamp": "2026-06-01T22:50:43.568747",
+    "feature_schema_hash": "d92e0fd0f660d9830e8edc478ac1b19f",
+    "training_dataset_hash": "378e9c74a269dd4f15cd8fce122a6cb5",
+    "config_hash": "99b4d0e6a38c27b7de472650f7f30e8b",
+    "scaler_hash": "N/A_XGBOOST",
+    "performance_metrics": {
+        "cv_accuracy_proxy": "N/A (Derived in comparison audit)"
+    },
+    "calibration_metrics": {},
+    "regime_metrics": {},
+    "deployment_status": "REJECTED",
+    "promotion_stage": 1,
+    "rejection_reason": "Shadow Sharpe underperforms incumbent."
+}

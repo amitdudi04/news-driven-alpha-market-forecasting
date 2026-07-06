@@ -1,0 +1,21 @@
+{
+    "execution_uuid": "36821cf1-32b1-470b-b508-42a2d297f98b",
+    "dataset_hashes": {
+        "news_daily.csv": "3643f593673689d42e3f660dc5778bd3",
+        "csi300_features.csv": "b820c7073c336144a83ac853655640d4"
+    },
+    "exchange_state_hash": "ac64f7f1587ccadc02bd34470b31e4a1",
+    "feature_snapshot_hash": "b820c7073c336144a83ac853655640d4",
+    "model_hash": "a1b2c3d4",
+    "prediction_timestamp": "2026-05-21T20:40:31.852380",
+    "authorization_snapshot": "AUTHORIZED_POST_CLOSE",
+    "inference_parameters": {
+        "model_type": "xgboost",
+        "finbert_version": "ProsusAI/finbert"
+    },
+    "pipeline_version": "2.0.0-audited",
+    "runtime_environment_metadata": {
+        "python_version": "3.13.13",
+        "os": "Windows"
+    }
+}

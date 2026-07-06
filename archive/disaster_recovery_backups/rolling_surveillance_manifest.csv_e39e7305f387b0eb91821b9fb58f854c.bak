@@ -1,0 +1,2 @@
+date,execution_uuid,rolling_sharpe,rolling_sortino,rolling_brier,rolling_ece,rolling_hit_rate,rolling_expectancy,rolling_strategy_return,rolling_benchmark_return,relative_edge_vs_bench,rolling_turnover,degradation_alert,drift_alert,calibration_alert,safe_mode_flag
+2026-05-29,PHASE14-AUDIT-b3d04b60,0.0,0.0,,,0.0,-0.0,-0.0,-0.0045052289566623,-2.2066061033064117,0.0,False,True,False,False

@@ -1,0 +1,57 @@
+{
+    "assets": {
+        "CSI300": {
+            "type": "EQUITY_INDEX",
+            "status": "PRODUCTION",
+            "data_path": "data/csi300_features.csv",
+            "model_path": "models/model_live.pkl",
+            "surveillance_path": "outputs/rolling_surveillance_manifest.csv",
+            "required_features": [
+                "volatility", "volume", "return"
+            ],
+            "max_stale_days": 1,
+            "timezone": "Asia/Shanghai"
+        },
+        "HSI": {
+            "type": "EQUITY_INDEX",
+            "status": "RESEARCH_ONLY",
+            "data_path": "data/hsi_features.csv",
+            "model_path": "models/research_hsi.pkl",
+            "surveillance_path": "outputs/research_hsi_manifest.csv",
+            "required_features": [
+                "volatility", "volume", "return"
+            ],
+            "max_stale_days": 1,
+            "timezone": "Asia/Hong_Kong"
+        },
+        "SSE50": {
+            "type": "EQUITY_INDEX",
+            "status": "RESEARCH_ONLY",
+            "data_path": "data/sse50_features.csv",
+            "model_path": "models/research_sse50.pkl",
+            "surveillance_path": "outputs/research_sse50_manifest.csv",
+            "required_features": [
+                "volatility", "volume", "return"
+            ],
+            "max_stale_days": 1,
+            "timezone": "Asia/Shanghai"
+        },
+        "SPY": {
+            "type": "EQUITY_PROXY",
+            "status": "RESEARCH_ONLY",
+            "data_path": "data/spy_features.csv",
+            "model_path": "models/research_spy.pkl",
+            "surveillance_path": "outputs/research_spy_manifest.csv",
+            "required_features": [
+                "volatility", "volume", "return"
+            ],
+            "max_stale_days": 1,
+            "timezone": "America/New_York"
+        }
+    },
+    "schema_standardization": {
+        "date_column": "date",
+        "target_column": "target_return_t+1",
+        "volatility_proxy": "volatility"
+    }
+}

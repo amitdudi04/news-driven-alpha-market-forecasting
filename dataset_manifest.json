@@ -1,0 +1,11 @@
+{
+    "dataset_start": "2026-02-24",
+    "dataset_end": "2026-06-01",
+    "trading_days": 66,
+    "article_count": 4345,
+    "missing_days": 0,
+    "duplicate_removal": "Strict daily deduplication",
+    "generation_timestamp": "2026-06-24T01:15:55.147148",
+    "dataset_hash": "09efc51d680fe383114b1e8c99ec4eabf77a2cb7521414f45246f02e0a60e565",
+    "external_limitations": "GDELT persistent IP ban (HTTP 429) prevented 365-day reconstruction. Frozen existing genuine 104-day dataset."
+}
