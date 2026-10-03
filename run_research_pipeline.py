@@ -1,18 +1,36 @@
-"""Run the reproducible, saved-data research experiment.
+"""Run the saved-data research experiment.
 
-This command does not call live APIs. It rebuilds features from the committed
-sentiment/market inputs, creates time-safe OOS XGBoost predictions, produces
-one-step-ahead GARCH forecasts, and evaluates the paper strategy.
+The command never calls external APIs. It rebuilds the feature set from the
+committed market/news inputs and only proceeds to model evaluation when the
+clean sample is large enough for the public walk-forward design.
 """
+
+import logging
 
 import module4_features
 import module5_xgboost
 import module6_garch
 import module7_backtesting
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+MIN_PUBLIC_SAMPLE = 60
+
 
 def main():
     module4_features.main()
+
+    labelled = module5_xgboost.load_data()
+    if len(labelled) < MIN_PUBLIC_SAMPLE:
+        logging.warning(
+            "Feature dataset built, but only %s labelled rows are available. "
+            "At least %s are required before publishing the OOS model comparison "
+            "and GARCH-scaled backtest.",
+            len(labelled),
+            MIN_PUBLIC_SAMPLE,
+        )
+        return
+
     module5_xgboost.main()
     module6_garch.main()
     module7_backtesting.main()
