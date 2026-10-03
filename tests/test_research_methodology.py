@@ -47,6 +47,25 @@ class TradingCalendarTests(unittest.TestCase):
         )
         self.assertEqual(int(monday["article_count_t"]), 30)
 
+
+    def test_pre_news_market_history_is_not_treated_as_neutral_sentiment(self):
+        earlier_market = pd.concat(
+            [
+                pd.DataFrame(
+                    {
+                        "date": pd.to_datetime(["2025-12-31"]),
+                        "close": [98.0],
+                        "return": [0.002],
+                        "volatility": [0.009],
+                    }
+                ),
+                self.market,
+            ],
+            ignore_index=True,
+        )
+        aligned = align_sentiment_to_trading_days(self.sent, earlier_market)
+        self.assertEqual(aligned["date"].min(), pd.Timestamp("2026-01-02"))
+
     def test_no_weekend_market_rows_are_created(self):
         aligned = align_sentiment_to_trading_days(self.sent, self.market)
         self.assertListEqual(
