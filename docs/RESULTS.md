@@ -4,9 +4,9 @@
 
 The project asks whether **China-focused economic and financial news sentiment contains incremental information for forecasting the next CSI 300 trading-session direction** beyond market-only variables.
 
-The planned predictive comparison is:
+The configured predictive comparison is:
 
-- **Market-only model:** volatility, momentum, momentum acceleration and an ex-ante volatility indicator.
+- **Market-only model:** volatility, momentum, momentum acceleration and a volatility indicator constructed using only information available through the forecast date.
 - **Market + sentiment model:** the same market variables plus rolling FinBERT sentiment, sentiment dispersion, news intensity and sentiment-volatility interactions.
 
 Before estimating that comparison, the repository reports descriptive evidence directly from the committed sample.
@@ -76,13 +76,15 @@ The descriptive high-minus-low return difference is approximately **-0.466 perce
 
 A simple rule that predicts next-session direction only from the sign of raw sentiment is correct on **45.2%** of the 31 aligned observations.
 
-Taken together, these statistics do not support a simple rule that more positive news is followed by a higher next-session market return. They motivate, rather than establish, the hypothesis that news may be more informative when considered jointly with momentum, volatility and attention.
+The negative association is not interpreted as evidence of a contrarian anomaly. With only 31 aligned observations, it may reflect sample composition, timing, omitted information or ordinary sampling variation.
+
+Taken together, these statistics do not support a simple rule that more positive news is followed by a higher next-session market return. They motivate, rather than establish, the hypothesis that news may be more informative when considered jointly with momentum, volatility and news intensity.
 
 ## Predictive-model evaluation protocol
 
-The feature set uses rolling sentiment measures, sentiment momentum and dispersion, news intensity, market momentum, sentiment-volatility interactions and an ex-ante volatility indicator.
+The feature set uses rolling sentiment measures, sentiment momentum and dispersion, news intensity, market momentum, sentiment-volatility interactions and a volatility indicator constructed using only information available through the forecast date.
 
-After rolling-feature construction and next-session target formation, the current sample contains **8 labelled model rows**. This is insufficient for the pre-specified walk-forward evaluation.
+After rolling-feature construction and next-session target formation, the current sample contains **8 labelled model rows**. This is insufficient for the configured walk-forward evaluation.
 
 The research configuration separates two thresholds:
 
@@ -138,7 +140,7 @@ data/final_dataset.csv
 
 The generated output files are excluded from version control so that stale local outputs are not presented as current evidence.
 
-After the pre-specified OOS reporting threshold is reached, the same pipeline also produces:
+After the configured OOS reporting threshold is reached, the same pipeline also produces:
 
 ~~~text
 outputs/model_evaluation.csv
@@ -152,4 +154,4 @@ outputs/oos_backtest_metrics.csv
 
 The current evidence supports a limited descriptive conclusion: **raw China-focused news sentiment is not a simple monotonic positive next-session signal for the CSI 300 in the committed sample**.
 
-The negative rank association and sentiment-sorted return pattern motivate a pre-specified test of whether rolling sentiment, investor-attention proxies and sentiment-volatility interactions add incremental predictive information beyond market-only variables. No persistent forecasting advantage, causal effect or profitable trading strategy is claimed from the current sample.
+The negative rank association and sentiment-sorted return pattern motivate a configured out-of-sample test of whether rolling sentiment, news-intensity measures and sentiment-volatility interactions add incremental predictive information beyond market-only variables. No persistent forecasting advantage, causal effect or profitable trading strategy is claimed from the current sample.
