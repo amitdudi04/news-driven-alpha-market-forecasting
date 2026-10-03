@@ -30,7 +30,7 @@ For the **49 CSI 300 trading sessions from 22 April through 3 July 2026**:
 |---|---:|
 | Up sessions | 25 |
 | Down sessions | 24 |
-| Compounded return from the stored session log returns | **+1.14%** |
+| Compounded return from the stored session log returns | **+1.56%** |
 | First-close to last-close price change | **+0.89%** |
 | Annualized realized volatility | **20.78%** |
 | Mean 20-day daily volatility estimate | **1.13%** |
