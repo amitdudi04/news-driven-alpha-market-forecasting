@@ -92,7 +92,10 @@ def process_news(raw: pd.DataFrame) -> pd.DataFrame:
     shanghai_time = df["datetime_utc"].dt.tz_convert("Asia/Shanghai")
     df["date"] = shanghai_time.dt.strftime("%Y-%m-%d")
 
-    if df["text"].str.contains("|".join(NON_EMPIRICAL_PATTERNS), regex=False).any():
+    has_seed = df["text"].apply(
+        lambda text: any(pattern in text for pattern in NON_EMPIRICAL_PATTERNS)
+    )
+    if has_seed.any():
         raise ValueError("Known development seed text detected in incoming news data.")
 
     return (
