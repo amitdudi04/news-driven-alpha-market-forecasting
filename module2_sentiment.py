@@ -121,12 +121,12 @@ def update_sentiment_database(
 def main(execution_uuid: str | None = None):
     del execution_uuid
     news_df, sent_df = load_data()
-    pending = identify_unprocessed_days(news_df, sent_df)
-    if pending.empty:
+    unprocessed_days = identify_unprocessed_days(news_df, sent_df)
+    if unprocessed_days.empty:
         logging.info("Sentiment features are already up to date")
         return
 
-    updates = analyze_sentiment(pending)
+    updates = analyze_sentiment(unprocessed_days)
     final_df = update_sentiment_database(sent_df, updates)
     out_path = os.path.join(os.getcwd(), "data", "sentiment_features.csv")
     final_df.to_csv(out_path, index=False)
