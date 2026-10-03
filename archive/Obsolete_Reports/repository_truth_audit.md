@@ -1,2 +1,0 @@
-# Repository Truth
-Status: VERIFIED
