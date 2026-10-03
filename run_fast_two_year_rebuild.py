@@ -967,8 +967,13 @@ def main() -> None:
                 )
             raise
 
+    final_status = (
+        "two_year_complete"
+        if args.start == PERIOD_START and args.end == PERIOD_END
+        else "period_complete"
+    )
     final = {
-        "status": "two_year_complete",
+        "status": final_status,
         "start": args.start.isoformat(),
         "end": args.end.isoformat(),
         "completed_at_utc": dt.datetime.now(
@@ -988,8 +993,7 @@ def main() -> None:
         handle.write(json.dumps(final) + "\n")
 
     print(
-        "\n2024-2025 FAST REBUILD COMPLETE. "
-        "Stopped at 2025-12-31.",
+        f"\nFAST REBUILD PERIOD COMPLETE. Stopped at {args.end}.",
         flush=True,
     )
 
