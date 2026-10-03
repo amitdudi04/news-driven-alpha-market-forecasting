@@ -21,8 +21,8 @@ def _max_drawdown(wealth: pd.Series) -> float:
 
 def build_backtest(predictions: pd.DataFrame, garch: pd.DataFrame) -> pd.DataFrame:
     garch = garch.sort_values("date").reset_index(drop=True).copy()
-    # The volatility target for day t is computed from GARCH forecasts that
-    # existed strictly before t, using the complete market forecast history.
+    # The volatility target for day t uses only GARCH forecasts available
+    # strictly before t.
     garch["target_volatility"] = (
         garch["pred_vol_t+1"].shift(1).expanding(min_periods=5).median()
     )
@@ -58,18 +58,25 @@ def build_backtest(predictions: pd.DataFrame, garch: pd.DataFrame) -> pd.DataFra
         df["position"].diff().abs().fillna(df["position"].abs())
     )
     df["transaction_cost"] = df["turnover"] * TRANSACTION_COST
+
+    # Market data are stored as log returns. Convert to simple returns before
+    # applying position weights and proportional transaction costs.
+    df["benchmark_return"] = np.expm1(df["actual_return_t+1"])
     df["strategy_return"] = (
-        df["position"] * df["actual_return_t+1"]
+        df["position"] * df["benchmark_return"]
         - df["transaction_cost"]
     )
-    df["benchmark_return"] = df["actual_return_t+1"]
-    df["strategy_wealth"] = np.exp(df["strategy_return"].cumsum())
-    df["benchmark_wealth"] = np.exp(df["benchmark_return"].cumsum())
+
+    if (df["strategy_return"] <= -1.0).any():
+        raise ValueError("Strategy return at or below -100% is not economically valid.")
+
+    df["strategy_wealth"] = (1.0 + df["strategy_return"]).cumprod()
+    df["benchmark_wealth"] = (1.0 + df["benchmark_return"]).cumprod()
     return df
 
 
 def compute_metrics(df: pd.DataFrame) -> pd.DataFrame:
-    def sharpe(series: pd.Series) -> float:
+    def sharpe_zero_rf(series: pd.Series) -> float:
         std = series.std(ddof=1)
         return (
             float(series.mean() / std * np.sqrt(252))
@@ -87,13 +94,17 @@ def compute_metrics(df: pd.DataFrame) -> pd.DataFrame:
         else np.nan
     )
 
+    strategy_total = float(df["strategy_wealth"].iloc[-1] - 1.0)
+    benchmark_total = float(df["benchmark_wealth"].iloc[-1] - 1.0)
+
     metrics = {
         "observations": int(len(df)),
         "active_observations": int(len(active)),
-        "strategy_total_return": float(df["strategy_wealth"].iloc[-1] - 1.0),
-        "benchmark_total_return": float(df["benchmark_wealth"].iloc[-1] - 1.0),
-        "strategy_sharpe": sharpe(df["strategy_return"]),
-        "benchmark_sharpe": sharpe(df["benchmark_return"]),
+        "strategy_total_return": strategy_total,
+        "benchmark_total_return": benchmark_total,
+        "active_total_return": strategy_total - benchmark_total,
+        "strategy_sharpe": sharpe_zero_rf(df["strategy_return"]),
+        "benchmark_sharpe": sharpe_zero_rf(df["benchmark_return"]),
         "strategy_max_drawdown": _max_drawdown(df["strategy_wealth"]),
         "benchmark_max_drawdown": _max_drawdown(df["benchmark_wealth"]),
         "active_directional_hit_rate": (
@@ -132,7 +143,7 @@ def main():
         os.path.join(os.getcwd(), "outputs", "oos_backtest_metrics.csv"),
         index=False,
     )
-    logging.info("Saved corrected OOS backtest and metrics")
+    logging.info("Saved OOS backtest and metrics")
 
 
 if __name__ == "__main__":
