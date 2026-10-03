@@ -4,6 +4,7 @@ import pandas as pd
 
 from module4_features import align_sentiment_to_trading_days
 from module13_signal_engine import generate_signal
+from module7_backtesting import build_backtest
 
 
 class TradingCalendarTests(unittest.TestCase):
@@ -66,6 +67,20 @@ class TradingCalendarTests(unittest.TestCase):
         aligned = align_sentiment_to_trading_days(self.sent, earlier_market)
         self.assertEqual(aligned["date"].min(), pd.Timestamp("2026-01-02"))
 
+
+    def test_missing_news_interval_is_not_neutralized(self):
+        incomplete_sent = self.sent[
+            self.sent["date"] != pd.Timestamp("2026-01-06")
+        ].copy()
+        aligned = align_sentiment_to_trading_days(
+            incomplete_sent,
+            self.market,
+        )
+        tuesday = aligned.loc[
+            aligned["date"] == pd.Timestamp("2026-01-06")
+        ].iloc[0]
+        self.assertTrue(pd.isna(tuesday["sentiment_mean_t"]))
+
     def test_no_weekend_market_rows_are_created(self):
         aligned = align_sentiment_to_trading_days(self.sent, self.market)
         self.assertListEqual(
@@ -96,6 +111,39 @@ class SignalRuleTests(unittest.TestCase):
             target_volatility=0.02,
         )
         self.assertLessEqual(abs(result["position"]), 1.0)
+
+
+class BacktestTimingTests(unittest.TestCase):
+    def test_risk_target_uses_all_prior_garch_forecasts(self):
+        dates = pd.to_datetime(
+            [
+                "2026-01-01",
+                "2026-01-02",
+                "2026-01-05",
+                "2026-01-06",
+                "2026-01-07",
+                "2026-01-08",
+            ]
+        )
+        garch = pd.DataFrame(
+            {
+                "date": dates,
+                "pred_vol_t+1": [0.01, 0.02, 0.03, 0.04, 0.05, 0.06],
+            }
+        )
+        predictions = pd.DataFrame(
+            {
+                "date": [pd.Timestamp("2026-01-08")],
+                "actual_return_t+1": [0.01],
+                "direction_probability_full": [0.60],
+            }
+        )
+        result = build_backtest(predictions, garch)
+        self.assertAlmostEqual(
+            float(result["target_volatility"].iloc[0]),
+            0.03,
+            places=10,
+        )
 
 
 class CommittedDataTests(unittest.TestCase):
