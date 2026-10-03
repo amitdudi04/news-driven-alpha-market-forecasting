@@ -1,129 +1,168 @@
-# Results and Current Empirical Status
+# Results
 
-This file summarizes the results that are supported by the **current public data and code** in this repository. It separates descriptive evidence from model-performance claims so that a reader can see what has been established and what still requires more data.
+## Research question
 
-## 1. Research question
+The project tests whether financial-news sentiment contains useful information for forecasting the **next CSI 300 trading-session direction** beyond market-only variables such as momentum and volatility.
 
-The project asks whether financial-news sentiment contains incremental information for forecasting the **next CSI 300 trading-session direction** beyond market-only variables such as momentum and volatility.
+The finance comparison is therefore:
 
-The empirical comparison is therefore:
+- **Market-only information set:** volatility, momentum, momentum acceleration and an ex-ante volatility indicator.
+- **Market + sentiment information set:** the same market variables plus rolling FinBERT sentiment, sentiment dispersion, news intensity and sentiment-volatility interaction terms.
 
-- **Market-only model:** volatility, momentum, momentum acceleration and the ex-ante volatility indicator.
-- **Market + sentiment model:** the same market variables plus rolling FinBERT sentiment, sentiment dispersion, news intensity and sentiment-volatility interaction terms.
+The important question is not whether XGBoost can fit a short sample. It is whether the alternative-data signal adds information beyond a conventional market baseline.
 
-The finance question is not simply whether XGBoost can fit the data. It is whether the alternative-data signal adds out-of-sample information after a market-only benchmark is already present.
+## Clean research sample
 
-## 2. Current clean data sample
+The committed empirical news/sentiment sample begins on **22 April 2026**.
 
-The committed clean news/sentiment history begins on **22 April 2026**. Earlier non-empirical development seed rows are not part of the research sample.
-
-| Item | Current committed evidence |
+| Item | Current evidence |
 |---|---:|
 | Daily news observations | 49 |
 | Daily sentiment observations | 49 |
 | Clean news period | 22 Apr 2026 – 6 Jul 2026 |
-| Article-level sentiment inputs | 6,919 |
+| Article/headline inputs scored by FinBERT | 6,919 |
 | Mean articles per news day | 141.2 |
 | Median articles per news day | 150 |
 | Mean daily FinBERT sentiment | +0.0551 |
-| Positive-sentiment days | 39 |
-| Negative-sentiment days | 10 |
 | CSI 300 observations in committed market file | 221 |
-| CSI 300 market-file period | 4 Aug 2025 – 3 Jul 2026 |
 
-The 49 clean news days and 49 sentiment days contain no duplicate dates, and the committed-data tests verify that the known development seed patterns are absent.
+Earlier development seed rows are not included in these figures.
 
-## 3. Market environment during the clean news window
+## CSI 300 market environment
 
-For the CSI 300 trading sessions from **22 April 2026 through 3 July 2026**:
+For CSI 300 trading sessions from **22 April 2026 through 3 July 2026**:
 
 | Market statistic | Value |
 |---|---:|
 | Trading sessions | 49 |
-| Cumulative CSI 300 return | +1.56% |
-| Annualized realized return volatility | 20.78% |
-| Mean 20-day daily volatility estimate | 1.13% |
+| Up sessions | 25 |
+| Down sessions | 24 |
+| Cumulative CSI 300 return | **+1.56%** |
+| Annualized realized volatility | **20.78%** |
+| Mean 20-day daily volatility estimate | **1.13%** |
 
-These are descriptive market statistics. They are not strategy returns and should not be interpreted as evidence that the sentiment model produced alpha.
+This was a mildly positive but volatile market window rather than a one-directional rally.
 
-## 4. Trading-session alignment result
+## News-to-market alignment
 
-The cleaned pipeline maps calendar-day news to actual CSI 300 trading sessions. It does not create weekend market rows and it does not treat missing news coverage as neutral sentiment.
-
-Within the clean market window:
+The trading-session mapping produced:
 
 | Alignment statistic | Value |
 |---|---:|
-| CSI 300 trading sessions considered | 49 |
-| Trading sessions with news assigned | 31 |
-| Trading sessions with missing news coverage | 18 |
+| CSI 300 sessions in the clean window | 49 |
+| Sessions with usable news assigned | 31 |
+| Sessions without usable news coverage | 18 |
+| Usable sentiment / next-session-return pairs | 31 |
 
-Weekend and holiday news can be included in the next available trading-session information set. A trading interval with no committed news observation remains missing.
+Weekend and holiday news is assigned to the next available trading-session information set. Missing news intervals remain missing rather than being converted to neutral sentiment.
 
-## 5. Feature-set availability
+## Exploratory finance result: raw sentiment information coefficient
 
-The current feature design uses rolling 5-day, 10-day and 20-day sentiment statistics together with market momentum and volatility.
+Before applying XGBoost, the project can ask a simpler finance question:
 
-The repository's CI smoke test currently produces:
+> Does stronger daily news sentiment rank with a higher next-session CSI 300 return?
 
-| Feature-status measure | Value |
-|---|---:|
-| Usable labelled feature rows | 8 |
-| Initial training rows required before public OOS evaluation | 60 |
-| Minimum rows required for first genuine OOS prediction | 61 |
-| Current shortfall | 53 |
+Using the 31 aligned observations, the **Spearman rank correlation (raw-sentiment information coefficient)** between the trading-session sentiment score and the next-session CSI 300 return is:
 
-The latest GitHub Actions research run successfully built the feature dataset and reported **8 labelled rows**, then stopped before model evaluation because the public minimum-sample condition was not met.
+**Rank IC = -0.348**
 
-This stop is intentional. The code does not manufacture a performance table from an undersized sample.
+The corresponding Pearson correlation is:
 
-## 6. Current model-performance result
+**Pearson correlation = -0.246**
 
-**No headline out-of-sample forecasting or trading-performance result is currently claimed.**
+These are descriptive sample statistics, not statistical-significance claims.
 
-The repository therefore does not publish:
+The negative rank relationship means that, in this short clean window, more positive raw sentiment did **not** translate monotonically into a higher next-session market return.
 
-- directional accuracy;
-- balanced accuracy;
-- Brier score;
-- log loss;
-- strategy cumulative return;
-- Sharpe ratio;
-- maximum drawdown;
-- active return versus the CSI 300;
-- turnover-adjusted profitability;
+That result is useful for the finance interpretation of the project: the value of news sentiment, if any, may depend on its interaction with momentum, volatility, attention and regime conditions rather than on a simple rule such as “positive news means buy.”
 
-for the corrected clean sample at this stage.
+## Sentiment-sorted next-session returns
 
-An earlier development trace contained unusually strong short-window figures. Those numbers are not carried forward as research evidence because the earlier period overlapped non-empirical development seed data and preceded the current time-series safeguards.
+To make the raw relationship easier to interpret, the 31 aligned observations can be divided into three equal-sized sentiment groups.
 
-Current conclusion:
+| Sentiment group | Observations | Mean sentiment | Mean next-session CSI 300 return | Next session positive |
+|---|---:|---:|---:|---:|
+| Lowest-sentiment tercile | 10 | +0.0177 | **+0.305%** | **70.0%** |
+| Middle tercile | 10 | +0.0610 | **+0.011%** | **50.0%** |
+| Highest-sentiment tercile | 11 | +0.1236 | **-0.161%** | **27.3%** |
 
-> **The research pipeline is validated at the data-alignment and methodology level, but the clean sample is not yet large enough to support a credible claim about persistent predictive alpha or trading profitability.**
+The descriptive high-minus-low next-session return difference is approximately **-0.466 percentage points**.
 
-## 7. Finance interpretation
+This is not presented as a tradable strategy or a causal result. The sample is small and the tercile thresholds are descriptive. However, it is a real empirical finding from the cleaned data and suggests that the simple relationship between news tone and next-session return is more complex than a direct positive-sentiment effect.
+
+## Simple directional benchmark
+
+A naive rule that predicts the next-session direction from only the sign of the raw sentiment score is correct on:
+
+**45.2% of the 31 aligned observations.**
+
+That is below 50% in this sample.
+
+This negative benchmark is important because it prevents the project from claiming that raw FinBERT sentiment alone is already an alpha signal. The research question is whether **engineered sentiment features and market interactions** add information beyond the market-only baseline under a proper walk-forward evaluation.
+
+## Why the project uses interaction features
+
+The descriptive results above motivate the feature design used in the research pipeline:
+
+- rolling sentiment rather than only same-day sentiment;
+- sentiment momentum;
+- sentiment dispersion;
+- news intensity;
+- sentiment × volatility;
+- sentiment-z-score × volatility;
+- market momentum;
+- an ex-ante volatility regime indicator.
+
+From a finance perspective, this tests whether the market response to information depends on the state in which that information arrives.
+
+## Current model-evaluation status
+
+The cleaned feature design uses 5-day, 10-day and 20-day rolling sentiment statistics together with market variables.
+
+With the current committed sample, only **8 labelled rows** remain after all rolling features and the next-session target are available.
+
+The public expanding-window design requires:
+
+- **60 observations** for the initial training window; and
+- at least **1 additional unseen observation** for the first genuine out-of-sample forecast.
+
+For that reason, the repository does **not** report accuracy, Sharpe ratio or strategy profitability from the corrected model yet. Reporting those numbers from eight labelled observations would be economically and statistically uninformative.
+
+This is different from saying that the project has “no result.” The current empirical result is:
+
+1. the cleaned news sample is measurable and aligned to actual trading sessions;
+2. raw daily sentiment does not show a simple positive next-session relationship;
+3. the observed rank IC is negative in this short sample;
+4. the sentiment-sorted returns are consistent with a possible contrarian or state-dependent relationship;
+5. the nonlinear market-plus-sentiment hypothesis therefore remains an open test rather than a pre-decided conclusion.
+
+## Finance interpretation
 
 ### Alternative data and price discovery
 
-The project tests whether unstructured financial news contributes information beyond standard market variables. This connects directly to price discovery, market efficiency and the use of alternative data in investment research.
+The project examines whether unstructured news adds information beyond standard market variables. That connects directly to:
 
-A positive future result would mean that the **market + sentiment** model improves out-of-sample forecasts relative to the **market-only** model on the tested sample. It would not by itself prove causality or a permanent market inefficiency.
+- price discovery;
+- market efficiency;
+- investor attention;
+- information processing;
+- alternative data in investment research.
+
+The current descriptive evidence does not support a simple “positive news leads to positive next-day return” rule.
 
 ### Benchmark and active return
 
-The CSI 300 is the economic benchmark.
+The economic benchmark is the **CSI 300**.
 
-For future strategy reporting:
+When the corrected paper strategy has enough observations, benchmark-relative performance will be reported as:
 
-[
-	ext{Active Return} = R_{	ext{strategy}} - R_{	ext{CSI300}}
-]
+**Active Return = Strategy Return - CSI 300 Return**
 
-The repository uses **News-Driven Alpha** as the project name, but benchmark-relative return should be described as **active return** unless a formal asset-pricing regression is used to estimate statistical alpha. The project does not currently claim Jensen's alpha.
+The project name uses “Alpha,” but the repository does not claim Jensen's alpha without an explicit asset-pricing regression.
 
 ### Risk-adjusted performance
 
-Once sufficient clean observations exist, the strategy evaluation will report:
+The eventual strategy evaluation is designed to report:
 
 - cumulative strategy return;
 - CSI 300 benchmark return;
@@ -133,47 +172,33 @@ Once sufficient clean observations exist, the strategy evaluation will report:
 - average turnover;
 - transaction-cost drag.
 
-The paper-strategy rule includes a **10 bps proportional transaction cost per unit of turnover** and caps absolute position size at **1.0x**.
+The paper strategy includes a **10 bps proportional transaction cost per unit of turnover** and caps absolute position size at **1.0x**.
 
 ### GARCH risk overlay
 
-GARCH(1,1) is used for **one-step-ahead volatility forecasting and position scaling**. It is not treated as the source of directional alpha.
+GARCH(1,1) is used for **one-step-ahead volatility forecasting and position scaling**.
 
-This distinction matters financially:
+Its role is separate from directional forecasting:
 
-- XGBoost asks **which direction?**
-- GARCH asks **how much risk is forecast?**
-- the signal engine asks **how large should the paper position be?**
+- XGBoost estimates **direction probability**;
+- GARCH estimates **forecast risk**;
+- the signal engine converts both into a bounded paper position.
 
-## 8. Result table that will be populated when the sample is sufficient
+GARCH is therefore a risk-management component, not the source of directional alpha.
 
-The research pipeline is designed to generate the following comparison.
+## What a finance reviewer can conclude today
 
-### Directional-model evaluation
+The current repository supports the following conclusions without relying on the earlier development trace:
 
-| Metric | Market only | Market + sentiment | Interpretation |
-|---|---:|---:|---|
-| Accuracy | Pending | Pending | Fraction of correct next-session signs |
-| Balanced accuracy | Pending | Pending | Directional accuracy adjusted for class imbalance |
-| Brier score | Pending | Pending | Probability calibration error; lower is better |
-| Log loss | Pending | Pending | Penalizes confident wrong probabilities; lower is better |
+1. **The alternative-data pipeline is economically defined.** News is mapped to a specific tradable benchmark, the CSI 300, and to a next-session target.
+2. **The clean sample contains 6,919 FinBERT-scored headline/article inputs across 49 news days.**
+3. **The CSI 300 gained 1.56% over the matched clean market window with 20.78% annualized realized volatility.**
+4. **Raw sentiment has a negative rank IC of -0.348 with next-session returns across 31 aligned observations.**
+5. **The lowest-sentiment tercile was followed by a +0.305% average next-session return, while the highest-sentiment tercile was followed by -0.161%.**
+6. **A naive raw-sentiment-sign rule achieved only 45.2% directional accuracy, so the project does not treat raw sentiment as a proven trading signal.**
+7. **The main finance hypothesis is therefore incremental and conditional:** whether rolling sentiment, attention and sentiment-volatility interactions improve a market-only forecasting model out of sample.
 
-The important research quantity is the **incremental improvement from adding sentiment**, not the standalone complexity of the model.
-
-### Paper-strategy evaluation
-
-| Metric | Strategy | CSI 300 benchmark |
-|---|---:|---:|
-| Cumulative return | Pending | Pending |
-| Annualized Sharpe | Pending | Pending |
-| Maximum drawdown | Pending | Pending |
-| Active return | Pending | — |
-| Average turnover | Pending | — |
-| Transaction-cost drag | Pending | — |
-
-These values will only be published after the corrected expanding-window evaluation has enough clean labelled observations.
-
-## 9. Reproducibility
+## Reproducibility
 
 Run:
 
@@ -181,9 +206,9 @@ Run:
 python run_research_pipeline.py
 ```
 
-The current committed sample builds the feature dataset and then exits before publishing OOS results because the minimum-sample requirement has not yet been reached.
+The current sample builds the feature dataset and stops before model-level out-of-sample evaluation because the minimum training requirement has not yet been reached.
 
-When sufficient history is available, the same command will generate:
+Once the clean sample is long enough, the same command will create:
 
 ```text
 outputs/model_evaluation.csv
@@ -193,17 +218,10 @@ outputs/oos_backtest.csv
 outputs/oos_backtest_metrics.csv
 ```
 
-Generated result files remain outside version control so that an old local run cannot be mistaken for the current research result.
+Generated outputs are kept outside version control so that an old local run cannot be mistaken for the current research result.
 
-## 10. Current conclusion
+## Current conclusion
 
-At this stage, the project provides a **time-aligned alternative-data research design** for Chinese equity forecasting:
+The project already produces a defensible finance result at the **descriptive alternative-data stage**: raw news tone is not a simple monotonic next-session signal in the clean CSI 300 sample, and the observed relationship is sufficiently state-dependent to justify testing rolling, interaction and risk-conditioned features.
 
-- GDELT provides the news stream;
-- FinBERT converts text into financial-tone features;
-- CSI 300 market variables provide the conventional information set;
-- expanding-window XGBoost is designed to test whether sentiment adds predictive information;
-- GARCH provides a separate volatility forecast for risk scaling;
-- turnover costs are incorporated into the paper-strategy design.
-
-The economic hypothesis remains open until a longer clean news history produces enough out-of-sample observations. That limitation is reported directly rather than replaced with an overstated short-sample performance claim.
+The stronger question—whether those engineered sentiment features improve the market-only model and generate positive active return after costs—remains to be answered with a longer clean history and genuine expanding-window out-of-sample observations.
