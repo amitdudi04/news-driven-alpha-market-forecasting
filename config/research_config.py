@@ -1,6 +1,6 @@
 """Research configuration for the News-Driven Alpha project.
 
-These settings define the public research experiment and paper-trading rule.
+These settings define the public research experiment and simulated-strategy rule.
 They are not live-capital limits.
 """
 
