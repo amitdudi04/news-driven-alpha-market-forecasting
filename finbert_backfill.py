@@ -19,7 +19,23 @@ def parse_date(value: str) -> dt.date:
     return dt.datetime.strptime(value, "%Y-%m-%d").date()
 
 
-def split_headlines(raw_text: str) -> list[str]:
+def split_headlines(
+    raw_text: str,
+    headlines_json: str | None = None,
+) -> list[str]:
+    """Parse headlines losslessly, preferring JSON over the legacy delimiter."""
+    if headlines_json is not None and not pd.isna(headlines_json):
+        value = str(headlines_json).strip()
+        if value:
+            parsed = json.loads(value)
+            if not isinstance(parsed, list):
+                raise ValueError("headlines_json must decode to a list")
+            return [
+                str(item).strip()
+                for item in parsed
+                if len(str(item).strip()) > 15
+            ]
+
     return [
         item.strip()
         for item in str(raw_text).split(" || ")
@@ -126,7 +142,10 @@ def score_day(
                 "manifest": str(manifest_path),
             }
 
-    headlines = split_headlines(row["raw_text"])
+    headlines = split_headlines(
+        row["raw_text"],
+        row.get("headlines_json"),
+    )
     declared_count = int(row["article_count"])
     if len(headlines) != declared_count:
         raise ValueError(

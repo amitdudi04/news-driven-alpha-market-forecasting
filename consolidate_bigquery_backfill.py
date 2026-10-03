@@ -138,6 +138,10 @@ def main() -> None:
                 "date": date_value,
                 "article_count": int(len(titles)),
                 "headline_hash": build_headline_hash(titles),
+                "headlines_json": json.dumps(
+                    titles,
+                    ensure_ascii=False,
+                ),
                 "raw_text": " || ".join(titles),
             }
         )
@@ -147,6 +151,7 @@ def main() -> None:
             "date",
             "article_count",
             "headline_hash",
+            "headlines_json",
             "raw_text",
         ],
     )

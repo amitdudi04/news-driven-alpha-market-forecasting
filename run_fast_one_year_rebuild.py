@@ -393,6 +393,10 @@ def consolidate_news(
                 "date": date_value,
                 "article_count": int(len(titles)),
                 "headline_hash": headline_hash(titles),
+                "headlines_json": json.dumps(
+                    titles,
+                    ensure_ascii=False,
+                ),
                 "raw_text": " || ".join(titles),
             }
         )
@@ -403,6 +407,7 @@ def consolidate_news(
             "date",
             "article_count",
             "headline_hash",
+            "headlines_json",
             "raw_text",
         ],
     )

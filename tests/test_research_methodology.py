@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from descriptive_analysis import load_inputs, summarize
+from finbert_backfill import split_headlines
 from module4_features import align_sentiment_to_trading_days
 from module13_signal_engine import generate_signal
 from module7_backtesting import build_backtest
@@ -77,6 +78,20 @@ class TradingCalendarTests(unittest.TestCase):
     def test_no_weekend_market_rows_are_created(self):
         aligned = align_sentiment_to_trading_days(self.sent, self.market)
         self.assertListEqual(list(aligned["date"]), list(self.market["date"]))
+
+
+class HistoricalHeadlineSerializationTests(unittest.TestCase):
+    def test_json_headlines_preserve_literal_legacy_delimiter(self):
+        headlines = [
+            "Secure Their Future: Market || China Ping An Insurance",
+            "China economy growth outlook improves",
+        ]
+        payload = __import__("json").dumps(headlines)
+        parsed = split_headlines(
+            "legacy text should not be used",
+            payload,
+        )
+        self.assertEqual(parsed, headlines)
 
 
 class SignalRuleTests(unittest.TestCase):
