@@ -46,14 +46,15 @@ def load_datasets() -> Tuple[pd.DataFrame, pd.DataFrame]:
 def _pool_sentiment(block: pd.DataFrame) -> tuple[float, float, int]:
     """Article-weighted aggregation of calendar-day sentiment observations."""
     if block.empty:
-        return 0.0, 0.0, 0
+        # Missing news coverage is not treated as neutral sentiment.
+        return np.nan, np.nan, 0
 
     counts = pd.to_numeric(block["article_count"], errors="coerce").fillna(0).clip(lower=0)
     means = pd.to_numeric(block["sentiment_mean"], errors="coerce").fillna(0.0)
     stds = pd.to_numeric(block["sentiment_std"], errors="coerce").fillna(0.0).clip(lower=0)
     total = int(counts.sum())
     if total <= 0:
-        return 0.0, 0.0, 0
+        return np.nan, np.nan, 0
 
     weights = counts / counts.sum()
     pooled_mean = float(np.sum(weights * means))
