@@ -77,7 +77,8 @@ def walk_forward_evaluation(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
     """Generate true one-step expanding-window out-of-sample probabilities.
 
     At each forecast date, both models are refit using only labelled rows that
-    occurred earlier in time. Feature definitions are fixed ex ante. No
+    occurred earlier in time. Feature definitions are fixed before the
+    walk-forward evaluation and are not selected using future OOS targets. No
     full-sample scaler, target-based feature selection, or random
     cross-validation is used.
     """
