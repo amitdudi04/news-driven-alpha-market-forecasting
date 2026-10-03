@@ -72,3 +72,10 @@ data/two_year_2024_2025_fast.log
 data/year_2026_checkpoints/
 data/year_2026_progress.jsonl
 data/year_2026_fast.log
+data/csi300_history_2022_2026_raw.csv
+data/csi300_market_features_2022_2026.csv
+data/csi300_market_2022_2026_summary.json
+data/timestamp_alignment_chunks/
+data/timestamp_aligned_headlines_2023_2026.csv.gz
+data/session_sentiment_timestamp_safe_2023_2026.csv
+data/timestamp_alignment_2023_2026_summary.json
