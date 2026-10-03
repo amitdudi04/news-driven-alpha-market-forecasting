@@ -68,15 +68,22 @@ def main(execution_uuid: str | None = None):
         raise ValueError("Inference or GARCH forecast output is empty.")
 
     latest_inf = inference.iloc[-1]
-    latest_garch = garch.iloc[-1]
+    feature_date = pd.to_datetime(latest_inf["Feature_Date"])
+    garch["date"] = pd.to_datetime(garch["date"])
+    matched_garch = garch[garch["date"] == feature_date]
+    if matched_garch.empty:
+        raise ValueError(
+            f"No GARCH forecast is available for inference date {feature_date.date()}."
+        )
+    latest_garch = matched_garch.iloc[-1]
     historical_vol = pd.to_numeric(
-        garch["pred_vol_t+1"], errors="coerce"
+        garch.loc[garch["date"] < feature_date, "pred_vol_t+1"],
+        errors="coerce",
     ).dropna()
-    target_vol = (
-        float(historical_vol.iloc[:-1].median())
-        if len(historical_vol) > 1
-        else float(historical_vol.median())
-    )
+    if historical_vol.empty:
+        target_vol = float(latest_garch["pred_vol_t+1"])
+    else:
+        target_vol = float(historical_vol.median())
 
     result = generate_signal(
         direction_probability=float(latest_inf["Direction_Prob_t+1"]),
