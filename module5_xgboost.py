@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, brier_score_loss, log_loss
-from sklearn.model_selection import TimeSeriesSplit
 
 from config.research_config import RANDOM_STATE
 from module4_features import MARKET_ONLY_FEATURES, MODEL_FEATURES
@@ -71,47 +70,70 @@ def _metrics(y_true: np.ndarray, probability: np.ndarray) -> dict:
 
 
 def walk_forward_evaluation(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Generate expanding-window out-of-sample probabilities.
+    """Generate true one-step expanding-window out-of-sample probabilities.
 
-    Feature definitions are fixed ex ante. No full-sample scaler, target-based
-    feature selection, or random cross-validation is used.
+    At each forecast date, both models are refit using only labelled rows that
+    occurred earlier in time. Feature definitions are fixed ex ante. No
+    full-sample scaler, target-based feature selection, or random
+    cross-validation is used.
     """
-    if len(df) < 45:
-        raise ValueError("At least 45 labeled observations are required for the public walk-forward evaluation.")
+    min_train = 60
+    if len(df) <= min_train:
+        raise ValueError(
+            "More than 60 labelled observations are required after feature "
+            "construction for the public walk-forward evaluation."
+        )
 
     X_full = df[MODEL_FEATURES]
     X_market = df[MARKET_ONLY_FEATURES]
     y = (df["target_return_t+1"] > 0).astype(int)
 
-    n_splits = min(5, max(3, len(df) // 20))
-    splitter = TimeSeriesSplit(n_splits=n_splits)
     prediction_rows = []
+    for idx in range(min_train, len(df)):
+        train_idx = np.arange(0, idx)
+        test_idx = [idx]
 
-    for fold, (train_idx, test_idx) in enumerate(splitter.split(X_full), start=1):
-        full_model = _fit_or_constant(X_full.iloc[train_idx], y.iloc[train_idx])
-        market_model = _fit_or_constant(X_market.iloc[train_idx], y.iloc[train_idx])
+        full_model = _fit_or_constant(
+            X_full.iloc[train_idx],
+            y.iloc[train_idx],
+        )
+        market_model = _fit_or_constant(
+            X_market.iloc[train_idx],
+            y.iloc[train_idx],
+        )
 
-        p_full = _predict_probability(full_model, X_full.iloc[test_idx])
-        p_market = _predict_probability(market_model, X_market.iloc[test_idx])
+        p_full = float(
+            _predict_probability(full_model, X_full.iloc[test_idx])[0]
+        )
+        p_market = float(
+            _predict_probability(market_model, X_market.iloc[test_idx])[0]
+        )
 
-        for j, idx in enumerate(test_idx):
-            prediction_rows.append(
-                {
-                    "date": df.loc[idx, "date"],
-                    "fold": fold,
-                    "actual_return_t+1": float(df.loc[idx, "target_return_t+1"]),
-                    "actual_direction_t+1": int(y.iloc[idx]),
-                    "direction_probability_full": float(p_full[j]),
-                    "direction_probability_market_only": float(p_market[j]),
-                    "predicted_direction_full": int(p_full[j] >= 0.5),
-                    "predicted_direction_market_only": int(p_market[j] >= 0.5),
-                }
-            )
+        prediction_rows.append(
+            {
+                "date": df.loc[idx, "date"],
+                "train_observations": int(idx),
+                "actual_return_t+1": float(
+                    df.loc[idx, "target_return_t+1"]
+                ),
+                "actual_direction_t+1": int(y.iloc[idx]),
+                "direction_probability_full": p_full,
+                "direction_probability_market_only": p_market,
+                "predicted_direction_full": int(p_full >= 0.5),
+                "predicted_direction_market_only": int(p_market >= 0.5),
+            }
+        )
 
     pred = pd.DataFrame(prediction_rows).sort_values("date").reset_index(drop=True)
     y_oos = pred["actual_direction_t+1"].to_numpy()
-    full_metrics = _metrics(y_oos, pred["direction_probability_full"].to_numpy())
-    market_metrics = _metrics(y_oos, pred["direction_probability_market_only"].to_numpy())
+    full_metrics = _metrics(
+        y_oos,
+        pred["direction_probability_full"].to_numpy(),
+    )
+    market_metrics = _metrics(
+        y_oos,
+        pred["direction_probability_market_only"].to_numpy(),
+    )
 
     metrics = pd.DataFrame(
         [
