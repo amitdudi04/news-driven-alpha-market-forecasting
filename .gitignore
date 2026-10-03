@@ -1,118 +1,54 @@
-# ===========================
 # Python
-# ===========================
 __pycache__/
 *.py[cod]
-*$py.class
 *.pyo
 *.pyd
 
-# ===========================
-# Virtual Environments
-# ===========================
+# Virtual environments
 venv/
 .venv/
 env/
 ENV/
 
-# ===========================
-# Environment Variables
-# ===========================
+# Environment variables
 .env
 .env.local
-
-# Keep template
 !.env.template
 
-# ===========================
-# IDE
-# ===========================
+# IDE / OS
 .vscode/
 .idea/
-
-# ===========================
-# Streamlit
-# ===========================
 .streamlit/
-
-# ===========================
-# Operating System
-# ===========================
 .DS_Store
 Thumbs.db
 
-# ===========================
-# Logs
-# ===========================
-*.log
-*.out
-*.err
-dashboard_errors.log
-institutional_dashboard.log
+# Generated research data
+data/final_dataset.csv
+data/manifests/
 
-# ===========================
-# Runtime Outputs
-# (Generated every pipeline run)
-# ===========================
-outputs/daily_prediction.csv
-outputs/live_tracking.csv
-outputs/live_inference.csv
-outputs/daily_operational_state.json
-outputs/news_ingestion_manifest.csv
-outputs/news_quality_manifest.csv
-outputs/rolling_surveillance_manifest.csv
+# Generated model artifacts
+models/*.pkl
+models/*_metadata.json
+models/shadow_registry/
 
-# Keep sample outputs only
-!outputs/sample_daily_prediction.csv
-!outputs/sample_live_tracking.csv
-!outputs/sample_daily_operational_state.json
+# Generated outputs
+outputs/*
+!outputs/.gitkeep
 
-# ===========================
-# Runtime Logs
-# ===========================
-logs/*.csv
-logs/*.jsonl
-logs/*.log
+# Runtime logs
+logs/*
+!logs/.gitkeep
 
-# ===========================
-# Scratch / Temporary
-# ===========================
+# Scratch / archive
 scratch/
+archive/
 *.tmp
 *.bak
 
-# ===========================
-# Jupyter
-# ===========================
+# Test / build caches
 .ipynb_checkpoints/
-
-# ===========================
-# pytest
-# ===========================
 .pytest_cache/
-
-# ===========================
-# mypy
-# ===========================
 .mypy_cache/
-
-# ===========================
-# Distribution
-# ===========================
 build/
 dist/
 *.egg-info/
-
-# ===========================
-# Archive
-# (Keep local only)
-# ===========================
-archive/
-
-# ===========================
-# Large model artifacts
-# (Ignore only if users download separately)
-# Uncomment if desired
-# ===========================
-# models/*.pkl
-# !models/README.md

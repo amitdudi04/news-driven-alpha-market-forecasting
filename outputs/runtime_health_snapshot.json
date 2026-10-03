@@ -1,8 +1,0 @@
-{
-    "timestamp": "2026-06-01T23:27:19.210017",
-    "cpu_percent": 11.4,
-    "memory_percent": 81.4,
-    "watchdog_state": "HEALTHY",
-    "safe_mode_trigger_count": 0,
-    "pipeline_latency_sec": 0.0
-}

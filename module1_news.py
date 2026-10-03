@@ -1,280 +1,167 @@
-import pandas as pd
-import requests
-import datetime
-import time
+import datetime as dt
 import logging
 import os
-import json
-import hashlib
-import uuid
-import numpy as np
+import time
 
-# ==========================================
-# MODULE 1: INSTITUTIONAL NEWS DATA EXTRACTION (GDELT)
-# ==========================================
+import pandas as pd
+import requests
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def get_hash(data: str) -> str:
-    return hashlib.md5(data.encode('utf-8')).hexdigest()
+GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+QUERY = '(China OR PBOC OR Beijing) (economy OR "stock market" OR "financial markets" OR regulation) sourcelang:english'
+NON_EMPIRICAL_PATTERNS = (
+    "China PBOC announces new liquidity measures to stabilize markets on",
+    "China PBOC economy stock market financial markets regulation",
+)
 
-def log_api_diagnostic(query: str, status_code: int, response_bytes: int, article_count: int, url: str):
-    log_dir = os.path.join(os.getcwd(), 'logs')
-    os.makedirs(log_dir, exist_ok=True)
-    log_path = os.path.join(log_dir, 'gdelt_response_audit.jsonl')
-    
-    entry = {
-        "timestamp_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "url_hash": get_hash(url),
-        "query_hash": get_hash(query),
-        "status_code": status_code,
-        "response_bytes": response_bytes,
-        "extracted_article_count": article_count
-    }
-    with open(log_path, 'a', encoding='utf-8') as f:
-        f.write(json.dumps(entry) + '\n')
 
-def fetch_gdelt_api(start_date: datetime.date, end_date: datetime.date, query: str) -> pd.DataFrame:
-    url = "https://api.gdeltproject.org/api/v2/doc/doc"
-    all_articles = []
-    current_date = start_date
-    
-    while current_date <= end_date:
-        logging.info(f"Fetching GDELT for {current_date}...")
-        params = {
-            "query": query,
-            "mode": "artlist",
-            "format": "json",
-            "maxrecords": 250,
-            "startdatetime": current_date.strftime("%Y%m%d000000"),
-            "enddatetime": current_date.strftime("%Y%m%d235959")
-        }
-        
-        try:
-            response = requests.get(url, params=params, timeout=15)
-            if response.status_code == 200:
-                data = response.json()
-                articles = data.get("articles", [])
-                log_api_diagnostic(query, 200, len(response.content), len(articles), url)
-                if articles:
-                    all_articles.extend(articles)
-            elif response.status_code == 429:
-                logging.warning(f"Rate limited on {current_date}. Waiting...")
-                time.sleep(5)
-                continue
-            else:
-                log_api_diagnostic(query, response.status_code, len(response.content), 0, url)
-        except Exception as e:
-            logging.error(f"Error fetching {current_date}: {e}")
-            
-        current_date += datetime.timedelta(days=1)
-        time.sleep(1.5)
-        
-    return pd.DataFrame(all_articles)
-
-def get_latest_news(query: str) -> pd.DataFrame:
-    logging.info("Executing real-time fetch (Last 24 hours)...")
-    url = "https://api.gdeltproject.org/api/v2/doc/doc"
-    
-    now = datetime.datetime.now(datetime.timezone.utc)
-    yesterday = now - datetime.timedelta(days=3)
-    
+def _request_window(start: dt.datetime, end: dt.datetime, query: str = QUERY) -> pd.DataFrame:
     params = {
         "query": query,
         "mode": "artlist",
         "format": "json",
         "maxrecords": 250,
-        "startdatetime": yesterday.strftime("%Y%m%d%H%M%S"),
-        "enddatetime": now.strftime("%Y%m%d%H%M%S")
+        "startdatetime": start.strftime("%Y%m%d%H%M%S"),
+        "enddatetime": end.strftime("%Y%m%d%H%M%S"),
     }
-    
-    max_retries = 3
-    for attempt in range(max_retries):
-        response = requests.get(url, params=params, timeout=15)
-        
-        if response.status_code == 429:
-            logging.warning("Rate limited on real-time fetch. Waiting 5s...")
-            time.sleep(5)
-            continue
-        elif response.status_code != 200:
-            log_api_diagnostic(query, response.status_code, len(response.content), 0, url)
-            raise RuntimeError(f"SAFE MODE ESCALATION: API Error {response.status_code}")
-        break
-    else:
-        log_api_diagnostic(query, 429, 0, 0, url)
-        raise RuntimeError("SAFE MODE ESCALATION: Persistent API 429 Rate Limit.")
-        
-    try:
-        data = response.json()
-    except json.JSONDecodeError:
-        log_api_diagnostic(query, response.status_code, len(response.content), 0, url)
-        raise RuntimeError("SAFE MODE ESCALATION: Malformed JSON from GDELT API")
-        
-    articles = data.get("articles", [])
-    log_api_diagnostic(query, response.status_code, len(response.content), len(articles), url)
-    
-    if not articles:
-        raise RuntimeError("SAFE MODE ESCALATION: Zero articles extracted. Silent empty returns are strictly prohibited.")
-        
-    df = pd.DataFrame(articles)
-    
-    # Schema Drift Detection
-    expected_schema = ['seendate', 'title', 'domain']
-    for col in expected_schema:
-        if col not in df.columns:
-            raise RuntimeError(f"SAFE MODE ESCALATION: Schema Drift Detected. Missing column: {col}")
-            
-    # Timestamp Format Validation
-    invalid_dates = df[~df['seendate'].str.match(r'^\d{8}T\d{6}Z$')]
-    if not invalid_dates.empty:
-        raise RuntimeError("SAFE MODE ESCALATION: Malformed timestamp formats detected in API payload.")
-        
-    return df
 
-def process_news(df: pd.DataFrame, query: str, execution_uuid: str = None) -> pd.DataFrame:
-    if df.empty:
-        return df
-        
-    initial_count = len(df)
-    
-    df.rename(columns={'seendate': 'timestamp', 'title': 'text', 'domain': 'source'}, inplace=True)
-    
-    df['datetime_utc'] = pd.to_datetime(df['timestamp'], format='%Y%m%dT%H%M%SZ', errors='coerce', utc=True)
-    df['datetime_cst'] = df['datetime_utc'] + pd.Timedelta(hours=8)
-    df['date'] = df['datetime_cst'].dt.strftime('%Y-%m-%d')
-    
-    # FUTURE DATA FILTER
-    current_cst = pd.Timestamp.now(tz='UTC') + pd.Timedelta(hours=8)
-    df = df[df['datetime_cst'] <= current_cst]
-    
-    # NLP CLEANING
-    df.dropna(subset=['date', 'text'], inplace=True)
-    
-    # Calculate duplicate ratio
-    unique_count = len(df.drop_duplicates(subset=['date', 'text']))
-    duplicate_ratio = 1.0 - (unique_count / len(df)) if len(df) > 0 else 0
-    df.drop_duplicates(subset=['date', 'text'], inplace=True)
-    
-    # HTML & Boilerplate Rejection
-    df = df[~df['text'].str.contains(r'<[^>]+>', regex=True, na=False)]
-    boilerplate_terms = ['subscribe', 'newsletter', 'click here', 'error 404', 'not found', 'access denied']
-    df = df[~df['text'].str.lower().str.contains('|'.join(boilerplate_terms))]
-    
-    after_boilerplate_count = len(df)
-    boilerplate_rejection_rate = 1.0 - (after_boilerplate_count / unique_count) if unique_count > 0 else 0
-    
-    df = df[df['text'].str.strip().str.len() > 30]
-    df = df[df['text'].str.count(r'[!?\-]') < 5]
-    
-    avg_length = df['text'].str.len().mean()
-    
-    # Source Concentration Governance
-    source_counts = df['source'].value_counts(normalize=True)
-    if not source_counts.empty and source_counts.iloc[0] > 0.7:
-        logging.warning(f"NEWS_SOURCE_CONCENTRATION_ALERT: Domain {source_counts.index[0]} controls {source_counts.iloc[0]:.1%} of flow.")
-        
-    if df.empty:
-        raise RuntimeError("SAFE MODE ESCALATION: Post-processing resulted in zero usable articles. Persistent noise environment.")
-        
-    # Stale News Surveillance
-    if len(df['timestamp'].unique()) == 1 and len(df) > 10:
-        raise RuntimeError("SAFE MODE ESCALATION: Frozen timestamps detected. Suspected stale feed recycling.")
-        
-    # Daily aggregation
-    agg_df = df.groupby('date').agg(
-        article_count=('text', 'count'),
-        raw_text=('text', lambda x: ' || '.join(x.astype(str)))
-    ).reset_index()
-    
-    # Generate Extraction Manifest
-    latest_timestamp = df['datetime_utc'].max()
-    stale_days = (pd.Timestamp.now(tz='UTC') - latest_timestamp).days
-    
-    manifest_entry = {
-        "execution_uuid": execution_uuid or str(uuid.uuid4()),
-        "extraction_timestamp": pd.Timestamp.now(tz='UTC').isoformat(),
-        "article_count": len(df),
-        "latest_article_timestamp": latest_timestamp.isoformat() if pd.notna(latest_timestamp) else None,
-        "stale_days": stale_days,
-        "query_hash": get_hash(query),
-        "gdelt_response_hash": get_hash(df.to_json())
-    }
-    
-    manifest_path = os.path.join(os.getcwd(), 'outputs', 'news_ingestion_manifest.csv')
-    os.makedirs(os.path.dirname(manifest_path), exist_ok=True)
-    pd.DataFrame([manifest_entry]).to_csv(manifest_path, mode='a', header=not os.path.exists(manifest_path), index=False)
-    
-    # Generate Quality Manifest
-    source_probs = source_counts.values
-    entropy = -np.sum(source_probs * np.log2(source_probs)) if len(source_probs) > 0 else 0
-    
-    quality_entry = {
-        "extraction_timestamp": pd.Timestamp.now(tz='UTC').isoformat(),
-        "duplicate_ratio": duplicate_ratio,
-        "boilerplate_rejection_rate": boilerplate_rejection_rate,
-        "average_article_length": avg_length,
-        "max_source_concentration": source_counts.iloc[0] if not source_counts.empty else 0,
-        "daily_article_entropy": entropy
-    }
-    
-    quality_path = os.path.join(os.getcwd(), 'outputs', 'news_quality_manifest.csv')
-    pd.DataFrame([quality_entry]).to_csv(quality_path, mode='a', header=not os.path.exists(quality_path), index=False)
-    
-    return agg_df.sort_values('date')
+    last_error = None
+    for attempt in range(3):
+        try:
+            response = requests.get(GDELT_URL, params=params, timeout=20)
+            if response.status_code == 429:
+                time.sleep(5 * (attempt + 1))
+                continue
+            response.raise_for_status()
+            payload = response.json()
+            return pd.DataFrame(payload.get("articles", []))
+        except Exception as exc:
+            last_error = exc
+            time.sleep(2 * (attempt + 1))
 
-def combine_and_deduplicate(old_df: pd.DataFrame, new_df: pd.DataFrame) -> pd.DataFrame:
+    raise RuntimeError(f"GDELT request failed after retries: {last_error}")
+
+
+def fetch_historical_news(
+    start_date: dt.date,
+    end_date: dt.date,
+    query: str = QUERY,
+) -> pd.DataFrame:
+    frames = []
+    current = start_date
+    while current <= end_date:
+        start = dt.datetime.combine(current, dt.time.min, tzinfo=dt.timezone.utc)
+        end = dt.datetime.combine(current, dt.time.max, tzinfo=dt.timezone.utc)
+        frame = _request_window(start, end, query)
+        if not frame.empty:
+            frames.append(frame)
+        current += dt.timedelta(days=1)
+        time.sleep(1.0)
+
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+
+
+def get_latest_news(query: str = QUERY, lookback_days: int = 3) -> pd.DataFrame:
+    end = dt.datetime.now(dt.timezone.utc)
+    start = end - dt.timedelta(days=lookback_days)
+    return _request_window(start, end, query)
+
+
+def process_news(raw: pd.DataFrame) -> pd.DataFrame:
+    if raw.empty:
+        return pd.DataFrame(columns=["date", "article_count", "raw_text"])
+
+    required = {"seendate", "title"}
+    missing = required - set(raw.columns)
+    if missing:
+        raise ValueError(f"GDELT payload missing columns: {sorted(missing)}")
+
+    df = raw.copy()
+    df["datetime_utc"] = pd.to_datetime(
+        df["seendate"],
+        format="%Y%m%dT%H%M%SZ",
+        errors="coerce",
+        utc=True,
+    )
+    df["text"] = df["title"].astype(str).str.strip()
+    df = df.dropna(subset=["datetime_utc"])
+    df = df[df["text"].str.len() > 15]
+    df = df.drop_duplicates(subset=["datetime_utc", "text"])
+
+    shanghai_time = df["datetime_utc"].dt.tz_convert("Asia/Shanghai")
+    df["date"] = shanghai_time.dt.strftime("%Y-%m-%d")
+
+    has_seed = df["text"].apply(
+        lambda text: any(pattern in text for pattern in NON_EMPIRICAL_PATTERNS)
+    )
+    if has_seed.any():
+        raise ValueError("Known development seed text detected in incoming news data.")
+
+    return (
+        df.groupby("date")
+        .agg(
+            article_count=("text", "count"),
+            raw_text=("text", lambda x: " || ".join(x)),
+        )
+        .reset_index()
+        .sort_values("date")
+    )
+
+
+def combine_daily_news(old_df: pd.DataFrame, new_df: pd.DataFrame) -> pd.DataFrame:
     if old_df is None or old_df.empty:
-        return new_df
-    if new_df.empty:
-        return old_df
-        
-    combined = pd.concat([old_df, new_df])
-    
-    def merge_texts(series):
-        all_articles = []
-        for text_block in series:
-            articles = [a.strip() for a in str(text_block).split(' || ') if a.strip()]
-            all_articles.extend(articles)
-        
-        unique_articles = list(set(all_articles))
-        return ' || '.join(unique_articles), len(unique_articles)
-        
-    final_rows = []
-    for date, group in combined.groupby('date'):
-        merged_text, count = merge_texts(group['raw_text'])
-        final_rows.append({
-            'date': date,
-            'article_count': count,
-            'raw_text': merged_text
-        })
-        
-    return pd.DataFrame(final_rows).sort_values('date')
+        combined = new_df.copy()
+    elif new_df.empty:
+        combined = old_df.copy()
+    else:
+        combined = pd.concat([old_df, new_df], ignore_index=True)
 
-def main(execution_uuid: str = None):
-    logging.info("Starting Module 1: Institutional News Extraction")
-    
-    query = '(China OR PBOC OR Beijing) (economy OR "stock market" OR "financial markets" OR regulation) sourcelang:english'
-    out_path = os.path.join(os.getcwd(), 'data', 'news_daily.csv')
-    
+    if combined.empty:
+        return combined
+
+    def merge_articles(series):
+        items = []
+        seen = set()
+        for block in series:
+            for article in str(block).split(" || "):
+                article = article.strip()
+                if article and article not in seen:
+                    seen.add(article)
+                    items.append(article)
+        return " || ".join(items), len(items)
+
+    rows = []
+    for date, group in combined.groupby("date", sort=True):
+        merged, count = merge_articles(group["raw_text"])
+        if any(pattern in merged for pattern in NON_EMPIRICAL_PATTERNS):
+            raise ValueError(f"Non-empirical seed text detected for {date}.")
+        rows.append({"date": date, "article_count": count, "raw_text": merged})
+    return pd.DataFrame(rows).sort_values("date").reset_index(drop=True)
+
+
+def main(execution_uuid: str | None = None):
+    del execution_uuid
+    out_path = os.path.join(os.getcwd(), "data", "news_daily.csv")
+
     if os.path.exists(out_path):
         old_df = pd.read_csv(out_path)
-        logging.info(f"Loaded existing database with {len(old_df)} days of history.")
-        raw_new_df = get_latest_news(query)
+        raw = get_latest_news()
     else:
-        old_df = pd.DataFrame()
-        logging.info("No existing database found. Running historical fetch...")
-        end_date = datetime.date.today()
-        start_date = end_date - datetime.timedelta(days=730)
-        raw_new_df = fetch_gdelt_api(start_date, end_date, query)
-        
-    if raw_new_df.empty:
-        raise RuntimeError("SAFE MODE ESCALATION: Silent empty returns are strictly prohibited.")
-        
-    processed_new_df = process_news(raw_new_df, query, execution_uuid)
-    final_df = combine_and_deduplicate(old_df, processed_new_df)
-    
-    final_df.to_csv(out_path, index=False)
-    logging.info(f"Database successfully updated. Total active days tracked: {len(final_df)}")
+        old_df = pd.DataFrame(columns=["date", "article_count", "raw_text"])
+        end_date = dt.date.today()
+        backfill_days = int(os.environ.get("NEWS_BACKFILL_DAYS", "365"))
+        raw = fetch_historical_news(
+            end_date - dt.timedelta(days=backfill_days),
+            end_date,
+        )
+
+    processed = process_news(raw)
+    combined = combine_daily_news(old_df, processed)
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    combined.to_csv(out_path, index=False)
+    logging.info("Saved %s daily news observations", len(combined))
+
 
 if __name__ == "__main__":
     main()
