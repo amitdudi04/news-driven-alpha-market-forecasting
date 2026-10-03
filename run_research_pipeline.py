@@ -1,33 +1,44 @@
 """Run the saved-data research experiment.
 
-The command never calls external APIs. It rebuilds the feature set from the
-committed market/news inputs and only proceeds to model evaluation when the
-clean sample is large enough for the public walk-forward design.
+The command never calls external APIs. It rebuilds descriptive evidence and
+model features from the committed inputs. Predictive-model performance is only
+reported after the pre-specified out-of-sample reporting threshold is reached.
 """
 
 import logging
 
+import descriptive_analysis
 import module4_features
 import module5_xgboost
 import module6_garch
 import module7_backtesting
+from config.research_config import (
+    MIN_DIRECTION_TRAIN_OBSERVATIONS,
+    MIN_OOS_REPORTING_OBSERVATIONS,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-MIN_PUBLIC_SAMPLE = 61
-
 
 def main():
+    descriptive_analysis.main()
     module4_features.main()
 
     labelled = module5_xgboost.load_data()
-    if len(labelled) < MIN_PUBLIC_SAMPLE:
+    minimum_public_sample = (
+        MIN_DIRECTION_TRAIN_OBSERVATIONS + MIN_OOS_REPORTING_OBSERVATIONS
+    )
+    if len(labelled) < minimum_public_sample:
         logging.warning(
-            "Feature dataset built, but only %s labelled rows are available. "
-            "At least %s are required (60 training rows plus one OOS row) before publishing the OOS model comparison "
-            "and GARCH-scaled backtest.",
+            "Descriptive results and feature data were rebuilt, but only %s "
+            "labelled model rows are available. The directional model requires "
+            "%s initial training rows, and this repository requires at least %s "
+            "genuine OOS forecasts before model-performance statistics are "
+            "reported (minimum %s labelled rows in total).",
             len(labelled),
-            MIN_PUBLIC_SAMPLE,
+            MIN_DIRECTION_TRAIN_OBSERVATIONS,
+            MIN_OOS_REPORTING_OBSERVATIONS,
+            minimum_public_sample,
         )
         return
 
