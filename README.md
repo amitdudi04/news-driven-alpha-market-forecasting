@@ -84,6 +84,8 @@ outputs/oos_backtest_metrics.csv
 
 These files are generated locally and are intentionally not committed.
 
+For a finance-oriented summary of the evidence currently supported by the repository, see [`docs/RESULTS.md`](docs/RESULTS.md).
+
 ## Run the project
 
 Install dependencies:
@@ -137,11 +139,15 @@ module13_signal_engine.py paper-signal construction
 run_research_pipeline.py
 run_daily_pipeline.py
 app.py
+docs/
+  RESULTS.md
 tests/
 ```
 
 ## Interpretation
 
 This is a research and paper-trading project, not a broker-connected trading system. A positive result would mean that sentiment features improve out-of-sample forecasting relative to the market-only baseline on the tested sample; it would not by itself establish causality or a durable exploitable anomaly.
+
+For finance reporting, benchmark-relative performance is described as **active return** versus the CSI 300. The project name uses “Alpha,” but the repository does not claim Jensen’s alpha without an asset-pricing regression.
 
 More detail is available in `DATA_CARD.md`, `MODEL_CARD.md`, `ARCHITECTURE.md`, `PIPELINE.md` and `PROJECT_LIMITATIONS.md`.
