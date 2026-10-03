@@ -12,12 +12,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 
 def load_data() -> pd.DataFrame:
-    path = os.path.join(os.getcwd(), "data", "final_dataset.csv")
+    path = os.path.join(os.getcwd(), "data", "csi300_features.csv")
     if not os.path.exists(path):
-        raise FileNotFoundError("Missing data/final_dataset.csv. Run module4_features.py first.")
+        raise FileNotFoundError("Missing data/csi300_features.csv. Run module3_market.py first.")
     df = pd.read_csv(path)
     df["date"] = pd.to_datetime(df["date"])
-    return df.sort_values("date").reset_index(drop=True)
+    df = df.sort_values("date").reset_index(drop=True)
+    df["target_volatility_t+1"] = df["volatility"].shift(-1)
+    return df
 
 
 def one_step_garch_forecasts(
@@ -28,7 +30,7 @@ def one_step_garch_forecasts(
     if len(df) <= min_train:
         raise ValueError(f"Need more than {min_train} observations for GARCH forecasting.")
 
-    returns = pd.to_numeric(df["return_t"], errors="coerce")
+    returns = pd.to_numeric(df["return"], errors="coerce")
     rows = []
     for i in range(min_train - 1, len(df)):
         train = returns.iloc[: i + 1].dropna() * 100.0
