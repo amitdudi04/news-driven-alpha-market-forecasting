@@ -122,7 +122,9 @@ with overview_tab:
         )
 
         st.caption(
-            "The current statistics are descriptive. They do not establish "
+            "The CSI 300 return compounds the 49 stored session log returns; "
+            "the 22 April return is measured from the preceding trading close. "
+            "The current statistics are descriptive and do not establish "
             "statistical significance, causality or a tradable sentiment effect."
         )
 
