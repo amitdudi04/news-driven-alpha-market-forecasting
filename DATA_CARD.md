@@ -9,7 +9,7 @@ FinBERT is applied to the GDELT title/headline text retained by the research pip
 
 ## Public sample
 
-The committed news/sentiment sample begins on **2026-04-22** and currently contains 49 news days.
+The committed news/sentiment sample begins on **2026-04-22** and currently contains **49 news days**, yielding **31 aligned sentiment / next-session-return pairs** and only **8 labelled rows** after the full rolling-feature construction.
 
 ## Time alignment
 
@@ -21,4 +21,4 @@ Weekend and holiday news can therefore enter the next available trading-day info
 
 The GDELT query is China-focused and includes macroeconomic, financial-market and regulatory terms. It is not a comprehensive archive of all China-related news.
 
-The public sample is short and contains gaps associated with public-API availability. The repository therefore treats the current sentiment-return statistics as exploratory and does not infer a stable long-horizon trading effect from them.
+The public sample is short and contains gaps associated with public-API availability. It is sufficient for a descriptive feasibility analysis but not for credible machine-learning validation. The repository therefore reports the current sentiment-return statistics as exploratory and does not infer predictive model performance, a stable long-horizon trading effect, or a durable anomaly from them.
