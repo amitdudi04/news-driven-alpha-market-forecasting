@@ -97,7 +97,7 @@ for the corrected clean sample at this stage.
 
 An earlier development trace contained unusually strong short-window figures. Those numbers are not carried forward as research evidence because the earlier period overlapped non-empirical development seed data and preceded the current time-series safeguards.
 
-The defensible conclusion today is:
+Current conclusion:
 
 > **The research pipeline is validated at the data-alignment and methodology level, but the clean sample is not yet large enough to support a credible claim about persistent predictive alpha or trading profitability.**
 
@@ -107,7 +107,7 @@ The defensible conclusion today is:
 
 The project tests whether unstructured financial news contributes information beyond standard market variables. This connects directly to price discovery, market efficiency and the use of alternative data in investment research.
 
-A positive future result would mean that the **market + sentiment** model improves genuine out-of-sample forecasts relative to the **market-only** model on the tested sample. It would not by itself prove causality or a permanent market inefficiency.
+A positive future result would mean that the **market + sentiment** model improves out-of-sample forecasts relative to the **market-only** model on the tested sample. It would not by itself prove causality or a permanent market inefficiency.
 
 ### Benchmark and active return
 
@@ -147,7 +147,7 @@ This distinction matters financially:
 
 ## 8. Result table that will be populated when the sample is sufficient
 
-The canonical pipeline is designed to generate the following comparison.
+The research pipeline is designed to generate the following comparison.
 
 ### Directional-model evaluation
 
@@ -197,7 +197,7 @@ Generated result files remain outside version control so that an old local run c
 
 ## 10. Current conclusion
 
-The present contribution is a **time-aligned alternative-data research design** for Chinese equity forecasting:
+At this stage, the project provides a **time-aligned alternative-data research design** for Chinese equity forecasting:
 
 - GDELT provides the news stream;
 - FinBERT converts text into financial-tone features;
@@ -206,4 +206,4 @@ The present contribution is a **time-aligned alternative-data research design** 
 - GARCH provides a separate volatility forecast for risk scaling;
 - turnover costs are incorporated into the paper-strategy design.
 
-The economic hypothesis remains open until a longer clean news history produces enough genuinely out-of-sample observations. That limitation is reported directly rather than replaced with an overstated short-sample performance claim.
+The economic hypothesis remains open until a longer clean news history produces enough out-of-sample observations. That limitation is reported directly rather than replaced with an overstated short-sample performance claim.
