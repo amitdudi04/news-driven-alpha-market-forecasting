@@ -29,7 +29,6 @@ data/manifests/
 # Generated model artifacts
 models/*.pkl
 models/*_metadata.json
-models/shadow_registry/
 
 # Generated outputs
 outputs/*
