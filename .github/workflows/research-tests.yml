@@ -27,3 +27,5 @@ jobs:
           pip install pandas numpy scikit-learn xgboost arch joblib
       - name: Run methodology tests
         run: python -m unittest discover -s tests -v
+      - name: Run saved-data research smoke test
+        run: python run_research_pipeline.py
