@@ -140,7 +140,7 @@ with data_tab:
 with model_tab:
     if evaluation is None or evaluation.empty:
         st.info(
-            "No corrected OOS evaluation is committed. "
+            "No OOS evaluation is available for the current sample. "
             "Run the research pipeline after extending the clean news history."
         )
     else:
@@ -197,7 +197,7 @@ with model_tab:
 with backtest_tab:
     if backtest is None or backtest.empty:
         st.info(
-            "No corrected OOS backtest is committed. "
+            "No OOS backtest is available for the current sample. "
             "Generated backtest files are intentionally kept out of Git."
         )
     else:
