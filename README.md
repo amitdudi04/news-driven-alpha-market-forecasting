@@ -1,4 +1,4 @@
-# News-Driven Alpha: Financial Sentiment and CSI 300 Forecasting
+# News-Driven Alpha: Financial Sentiment and CSI 300 Forecasting Framework
 
 This project studies whether **China-focused economic and financial news sentiment adds incremental next-session forecasting information beyond market-only variables for the CSI 300**.
 
@@ -6,7 +6,7 @@ This project studies whether **China-focused economic and financial news sentime
 
 The committed sample contains **6,919 GDELT title/headline observations across 49 news days**. After end-of-day trading-session alignment, **31 sentiment / next-session-return pairs** are available for descriptive analysis. Raw sentiment has a **Spearman time-series rank correlation of -0.348** with the next-session CSI 300 return, while a naive rule based only on the sign of sentiment is correct on **45.2%** of aligned observations.
 
-These results do not establish a trading edge. Instead, they motivate the project's formal forecasting question: whether rolling sentiment, news intensity and sentiment-volatility interactions improve a **market + sentiment XGBoost model** relative to a **market-only XGBoost baseline** under chronological expanding-window evaluation. **GARCH(1,1) is kept separate from directional forecasting and is used only as a one-step-ahead volatility risk overlay for position scaling.**
+The current empirical contribution is therefore a **descriptive feasibility study**, not a validated forecasting or trading result. The predictive modules are implemented to test the next research question once a materially longer clean history is available: whether rolling sentiment, news intensity and sentiment-volatility interactions improve a **market + sentiment XGBoost model** relative to a **market-only XGBoost baseline** under chronological expanding-window evaluation. **GARCH(1,1) is kept separate from directional forecasting and is used only as a one-step-ahead volatility risk overlay for position scaling.**
 
 ## Research design
 
@@ -39,7 +39,7 @@ volatility risk forecast
 
 direction probability + volatility forecast
       ↓
-paper-trading rule + turnover costs
+simulated strategy rule + turnover costs
 ~~~
 
 The directional target is the **next CSI 300 trading-session return sign**. Weekend and holiday news is aggregated into the next available trading-day information set; no artificial weekend market observations are created.
@@ -98,20 +98,20 @@ The complete result interpretation is in [docs/RESULTS.md](docs/RESULTS.md).
 
 ## Model-evaluation status
 
-The full rolling feature set currently leaves **8 labelled model rows**, so model-level performance is not reported.
+The 49-news-day sample is too small for credible machine-learning validation. After rolling-feature construction and target formation, only **8 labelled model rows** remain, so model-level performance is not reported. The repository should therefore be read as **descriptive evidence plus a forecasting-evaluation framework**, not as evidence that the XGBoost model or simulated strategy works.
 
 The configured evaluation design uses:
 
 - **60 labelled observations** for the initial expanding training window; and
 - at least **30 genuine OOS forecasts** before model-performance statistics are reported.
 
-The public pipeline therefore requires at least **90 labelled model rows** before publishing XGBoost accuracy, Sharpe ratio, active return or paper-strategy profitability. The 30-OOS rule is a minimum reporting convention, not a statistical-power claim or evidence that a durable effect has been established.
+The public pipeline therefore requires at least **90 labelled model rows** before publishing XGBoost accuracy, Sharpe ratio, active return or simulated-strategy performance. The 30-OOS rule is a minimum reporting convention, not a statistical-power claim or evidence that a durable effect has been established.
 
-## Risk and paper-strategy framework
+## Prospective simulation framework
 
 GARCH(1,1) provides one-step-ahead volatility forecasts for position scaling. It does not generate the directional signal.
 
-The paper rule uses:
+If the OOS reporting threshold is reached, the configured simulation rule uses:
 
 - p(up) >= 0.55 → LONG;
 - p(up) <= 0.45 → SHORT;
@@ -119,7 +119,7 @@ The paper rule uses:
 - absolute position size capped at 1.0x;
 - 10 bps proportional transaction cost per unit of turnover.
 
-Stored market log returns are converted to simple returns before position weighting, transaction costs and wealth compounding.
+The probability thresholds and transaction-cost assumption are implementation conventions for a future OOS simulation; they have not been validated or optimized on the current short sample. Stored market log returns are converted to simple returns before position weighting, transaction costs and wealth compounding.
 
 ## Reproducibility
 
@@ -186,9 +186,9 @@ module3_market.py          CSI 300 market data
 module4_features.py        trading-session alignment + feature engineering
 module5_xgboost.py         expanding-window direction model + ablation
 module6_garch.py           one-step-ahead volatility forecasts
-module7_backtesting.py     OOS paper-strategy evaluation
+module7_backtesting.py     OOS simulated-strategy evaluation
 module12_inference.py      latest next-session direction inference
-module13_signal_engine.py  paper-signal construction
+module13_signal_engine.py  research-signal construction
 
 run_research_pipeline.py
 run_daily_pipeline.py
@@ -202,6 +202,6 @@ tests/
 
 The economic benchmark is the **CSI 300**. If sufficient OOS evidence becomes available, benchmark-relative strategy performance is reported as **active return**. The project title uses “Alpha,” but the repository does not claim **Jensen's alpha** without an explicit asset-pricing regression.
 
-This is a research and paper-trading project, not a broker-connected trading system. Any future positive OOS result would describe performance on the tested sample; it would not by itself establish causality, persistence, economic scalability or a durable market anomaly.
+This is a research prototype with an optional simulated-strategy layer, not a broker-connected trading system. Any future positive OOS result would describe performance on the tested sample; it would not by itself establish causality, persistence, economic scalability or a durable market anomaly.
 
 Further methodological detail is available in [DATA_CARD.md](DATA_CARD.md), [MODEL_CARD.md](MODEL_CARD.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PIPELINE.md](PIPELINE.md) and [PROJECT_LIMITATIONS.md](PROJECT_LIMITATIONS.md).
