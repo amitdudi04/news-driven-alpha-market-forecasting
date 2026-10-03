@@ -54,7 +54,7 @@ importance = load_csv("outputs/feature_importance.csv")
 latest_signal = load_csv("outputs/daily_prediction.csv")
 
 overview_tab, data_tab, model_tab, backtest_tab, signal_tab = st.tabs(
-    ["Overview", "Data", "Model evaluation", "OOS backtest", "Latest paper signal"]
+    ["Overview", "Data", "Model evaluation", "OOS backtest", "Latest research signal"]
 )
 
 with overview_tab:
@@ -216,7 +216,7 @@ with model_tab:
     if evaluation is None or evaluation.empty:
         st.info(
             "Model-performance statistics are not available for the current "
-            "sample because the configured OOS reporting threshold has not "
+            "sample because only 8 labelled model rows remain after rolling-feature construction and the configured OOS reporting threshold has not "
             "been reached."
         )
     else:
@@ -273,7 +273,7 @@ with model_tab:
 with backtest_tab:
     if backtest is None or backtest.empty:
         st.info(
-            "No OOS paper-strategy backtest is reportable for the current "
+            "No OOS simulated-strategy backtest is reportable for the current "
             "sample. Generated backtest outputs remain outside version control."
         )
     else:
@@ -323,7 +323,7 @@ with backtest_tab:
 with signal_tab:
     if latest_signal is None or latest_signal.empty:
         st.info(
-            "No paper-trading signal is available in this checkout. "
+            "No research signal is available in this checkout. "
             "The daily research refresh requires a trained canonical model artifact."
         )
     else:

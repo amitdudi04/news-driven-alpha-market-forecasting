@@ -11,11 +11,11 @@
 
 Feature definitions are fixed before the walk-forward evaluation is run and are not selected using future OOS targets.
 
-The configured design uses **60 labelled observations** for the initial expanding training window. Model-performance statistics are reported only after at least **30 genuine OOS forecasts** are available, requiring at least **90 labelled model rows** in the public reporting pipeline. The 30-OOS threshold is a minimum reporting convention, not a statistical-power guarantee or evidence of a durable effect.
+The configured design uses **60 labelled observations** for the initial expanding training window. Model-performance statistics are reported only after at least **30 genuine OOS forecasts** are available, requiring at least **90 labelled model rows** in the public reporting pipeline. The 30-OOS threshold is a minimum reporting convention, not a statistical-power guarantee or evidence of a durable effect. With only 8 labelled rows in the current sample, no model-performance claim is made.
 
 ## Final inference model
 
-After historical OOS evaluation, a separate final model may be refit on all currently labelled history for the next paper-trading prediction. That refit is not used to score the historical OOS test.
+After historical OOS evaluation, a separate final model may be refit on all currently labelled history for the next research prediction. That refit is not used to score the historical OOS test.
 
 ## Risk model
 

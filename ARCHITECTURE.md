@@ -33,7 +33,7 @@ Next-session volatility forecast
 
 Direction probability + volatility forecast
    ↓
-Paper-trading rule + turnover costs
+Simulated strategy rule + turnover costs
    ↓
 Saved research outputs
    ↓
@@ -49,4 +49,4 @@ Read-only Streamlit presentation layer
 
 ## Reporting gate
 
-The expanding-window design uses 60 labelled observations for the initial training window. Model-performance statistics are presented only when at least 30 subsequent genuine OOS forecasts are available. The current committed sample does not meet that threshold, so the public evidence is descriptive rather than model-performance evidence.
+The expanding-window design uses 60 labelled observations for the initial training window. Model-performance statistics are presented only when at least 30 subsequent genuine OOS forecasts are available. The current committed sample does not meet that threshold, so the public evidence is descriptive rather than model-performance evidence. The strategy layer is therefore a prospective simulation framework, not a validated trading result.

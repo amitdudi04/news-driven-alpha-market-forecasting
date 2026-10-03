@@ -9,7 +9,7 @@ The configured predictive comparison is:
 - **Market-only model:** volatility, momentum, momentum acceleration and a volatility indicator constructed using only information available through the forecast date.
 - **Market + sentiment model:** the same market variables plus rolling FinBERT sentiment, sentiment dispersion, news intensity and sentiment-volatility interactions.
 
-Before estimating that comparison, the repository reports descriptive evidence directly from the committed sample.
+With the current short sample, the repository reports **descriptive evidence only**. The predictive comparison is an implemented evaluation framework rather than a validated model result.
 
 ## Sample and market environment
 
@@ -84,14 +84,14 @@ Taken together, these statistics do not support a simple rule that more positive
 
 The feature set uses rolling sentiment measures, sentiment momentum and dispersion, news intensity, market momentum, sentiment-volatility interactions and a volatility indicator constructed using only information available through the forecast date.
 
-After rolling-feature construction and next-session target formation, the current sample contains **8 labelled model rows**. This is insufficient for the configured walk-forward evaluation.
+After rolling-feature construction and next-session target formation, the current sample contains only **8 labelled model rows**. This is far too small for credible machine-learning validation and is insufficient for the configured walk-forward evaluation.
 
 The research configuration separates two thresholds:
 
 - **60 labelled observations** are required for the initial expanding training window.
 - At least **30 genuine OOS forecasts** are required before model-performance statistics are published.
 
-The 30-observation rule is a conservative reporting threshold, not a claim that 30 forecasts are sufficient to establish a durable effect. With the current sample, the repository therefore does not report XGBoost accuracy, Sharpe ratio, active return or strategy profitability.
+The 30-observation rule is only a minimum reporting floor, not a statistical-power claim and not evidence that 30 forecasts would be sufficient to establish a durable effect. With the current sample, the repository therefore does not report XGBoost accuracy, Sharpe ratio, active return or simulated-strategy performance.
 
 When the threshold is reached, the primary model question is whether the **market + sentiment** XGBoost model improves on the **market-only** XGBoost baseline out of sample.
 
@@ -99,7 +99,7 @@ When the threshold is reached, the primary model question is whether the **marke
 
 GARCH(1,1) is estimated separately from the directional model and provides one-step-ahead volatility forecasts for position scaling.
 
-The paper-strategy rule uses:
+The prospective simulated-strategy rule uses:
 
 - p(up) >= 0.55 → LONG;
 - p(up) <= 0.45 → SHORT;
@@ -107,7 +107,7 @@ The paper-strategy rule uses:
 - absolute position size capped at **1.0x**;
 - **10 bps** proportional transaction cost per unit of turnover.
 
-Market log returns are converted to simple returns before position weighting, transaction costs and wealth compounding.
+The probability thresholds and 10 bps transaction-cost assumption are fixed simulation conventions, not values optimized on the current short sample. Market log returns are converted to simple returns before position weighting, transaction costs and wealth compounding.
 
 When enough OOS observations exist, the evaluation reports:
 
@@ -152,6 +152,6 @@ outputs/oos_backtest_metrics.csv
 
 ## Conclusion
 
-The current evidence supports a limited descriptive conclusion: **raw China-focused news sentiment is not a simple monotonic positive next-session signal for the CSI 300 in the committed sample**.
+The current evidence supports a **limited descriptive feasibility conclusion**: **raw China-focused news sentiment is not a simple monotonic positive next-session signal for the CSI 300 in the committed sample**.
 
 The negative rank association and sentiment-sorted return pattern motivate a configured out-of-sample test of whether rolling sentiment, news-intensity measures and sentiment-volatility interactions add incremental predictive information beyond market-only variables. No persistent forecasting advantage, causal effect or profitable trading strategy is claimed from the current sample.

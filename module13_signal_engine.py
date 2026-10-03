@@ -59,7 +59,7 @@ def main(execution_uuid: str | None = None):
     )
     if not os.path.exists(inference_path) or not os.path.exists(garch_path):
         raise FileNotFoundError(
-            "Run modules 6 and 12 before generating the paper-trading signal."
+            "Run modules 6 and 12 before generating the research signal."
         )
 
     inference = pd.read_csv(inference_path)
@@ -138,7 +138,7 @@ def main(execution_uuid: str | None = None):
         row = pd.concat([existing, row], ignore_index=True)
 
     row.to_csv(out_path, index=False)
-    logging.info("Saved paper-trading signal to outputs/daily_prediction.csv")
+    logging.info("Saved research signal to outputs/daily_prediction.csv")
 
 
 if __name__ == "__main__":

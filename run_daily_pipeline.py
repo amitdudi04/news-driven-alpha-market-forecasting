@@ -2,7 +2,7 @@
 
 The daily path refreshes external data, updates sentiment and features, creates
 an updated GARCH volatility forecast, runs the canonical XGBoost artifact, and
-writes a paper-trading signal. It is a research workflow, not a live-capital
+writes a research signal. It is a research workflow, not a live-capital
 execution system.
 """
 
