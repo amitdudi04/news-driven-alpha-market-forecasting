@@ -79,7 +79,7 @@ Trading-session alignment produces **31 sentiment / next-session-return pairs**.
 - lowest-sentiment tercile mean next-session return: **+0.305%**;
 - highest-sentiment tercile mean next-session return: **-0.161%**.
 
-Across the 49 aligned CSI 300 sessions, the compounded return implied by the stored daily log returns is **+1.14%** and annualized realized volatility is **20.78%**.
+Across the 49 aligned CSI 300 sessions, the compounded return implied by the stored daily log returns is **+1.56%** and annualized realized volatility is **20.78%**.
 
 These statistics are exploratory. They do not establish a causal relationship or a tradable sentiment effect. Instead, they motivate the pre-specified test of whether rolling sentiment, attention and sentiment-volatility interactions improve forecasting beyond the market-only baseline.
 
