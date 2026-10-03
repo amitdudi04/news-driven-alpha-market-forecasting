@@ -167,6 +167,14 @@ class CommittedDataTests(unittest.TestCase):
             pd.Timestamp("2026-04-22"),
         )
 
+    def test_committed_market_schema_is_research_only(self):
+        market = pd.read_csv("data/csi300_features.csv")
+        self.assertListEqual(
+            list(market.columns),
+            ["date", "close", "return", "volatility"],
+        )
+        self.assertFalse(market["date"].duplicated().any())
+
     def test_sentiment_counts_match_committed_news_counts(self):
         news = pd.read_csv("data/news_daily.csv")[["date", "article_count"]]
         sentiment = pd.read_csv("data/sentiment_features.csv")[["date", "article_count"]]
