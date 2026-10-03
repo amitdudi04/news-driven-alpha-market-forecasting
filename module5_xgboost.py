@@ -1,143 +1,179 @@
-import pandas as pd
-import numpy as np
-import xgboost as xgb
-from sklearn.model_selection import TimeSeriesSplit, cross_val_predict
-from sklearn.metrics import accuracy_score
+import json
 import logging
 import os
-import joblib
-from sklearn.calibration import CalibratedClassifierCV
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+import joblib
+import numpy as np
+import pandas as pd
+import xgboost as xgb
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, brier_score_loss, log_loss
+from sklearn.model_selection import TimeSeriesSplit
+
+from config.research_config import RANDOM_STATE
+from module4_features import MARKET_ONLY_FEATURES, MODEL_FEATURES
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+MODEL_PATH = os.path.join("models", "news_alpha_xgboost.pkl")
+
 
 def load_data() -> pd.DataFrame:
-    file_path = os.path.join(os.getcwd(), 'data', 'final_dataset.csv')
-    if not os.path.exists(file_path):
-        logging.error(f"Missing {file_path}")
-        return None
-    df = pd.read_csv(file_path)
-    df['date'] = pd.to_datetime(df['date'])
-    df = df.dropna(subset=['target_return_t+1']).reset_index(drop=True)
-    return df.sort_values('date').reset_index(drop=True)
+    path = os.path.join(os.getcwd(), "data", "final_dataset.csv")
+    if not os.path.exists(path):
+        raise FileNotFoundError("Missing data/final_dataset.csv. Run module4_features.py first.")
+    df = pd.read_csv(path)
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.sort_values("date").dropna(subset=["target_return_t+1"]).reset_index(drop=True)
+    return df
 
-def train_and_evaluate(df: pd.DataFrame):
-    exclude_cols = ['date', 'target_return_t+1', 'target_volatility_t+1']
-    feature_cols = [col for col in df.columns if col not in exclude_cols]
-    
-    # PHASE 1 — TARGET DEFINITION
-    target_return = df['target_return_t+1']
-    direction_target = np.where(target_return > 0, 1, 0)
-    
-    # PHASE 2 — REGIME CREATION
-    median_vol = df['volatility'].median()
-    df['regime'] = np.where(df['volatility'] > median_vol, 1, 0)
-    if 'regime' in feature_cols: feature_cols.remove('regime')
-    
-    # PHASE 3 — SPLIT DATA
-    df_high = df[df['regime'] == 1]
-    df_low = df[df['regime'] == 0]
-    
-    X = df[feature_cols]
-    
-    # PHASE 4 — TRAIN MODELS (HIGH AND LOW VOL)
-    base_high = xgb.XGBClassifier(max_depth=3, learning_rate=0.05, n_estimators=200, random_state=42, eval_metric='logloss')
-    base_low = xgb.XGBClassifier(max_depth=3, learning_rate=0.05, n_estimators=200, random_state=42, eval_metric='logloss')
-    
-    # Wrap in CalibratedClassifierCV to break confidence plateaus and smooth probability entropy
-    model_high_vol = CalibratedClassifierCV(base_high, method='sigmoid', cv=3)
-    model_low_vol = CalibratedClassifierCV(base_low, method='sigmoid', cv=3)
-    
-    if len(df_high) >= 15: # Need enough samples for CV
-        model_high_vol.fit(df_high[feature_cols], direction_target[df_high.index])
-    elif len(df_high) > 0:
-        base_high.fit(df_high[feature_cols], direction_target[df_high.index])
-        model_high_vol = base_high
-        
-    if len(df_low) >= 15:
-        model_low_vol.fit(df_low[feature_cols], direction_target[df_low.index])
-    elif len(df_low) > 0:
-        base_low.fit(df_low[feature_cols], direction_target[df_low.index])
-        model_low_vol = base_low
-        
-    base_meta = xgb.XGBClassifier(max_depth=3, learning_rate=0.05, n_estimators=100, random_state=42, eval_metric='logloss')
-    meta_model = CalibratedClassifierCV(base_meta, method='sigmoid', cv=3)
-    tscv = TimeSeriesSplit(n_splits=5)
-    oof_indices = []
-    dir_probs_oof = []
-    
-    # Restrict meta-training strictly to HIGH VOL regime
-    X_high = df_high[feature_cols]
-    y_high = direction_target[df_high.index]
-    
-    for train_idx, test_idx in tscv.split(X_high):
-        df_train_high = df_high.iloc[train_idx]
-        df_test_high = df_high.iloc[test_idx]
-        
-        y_train_series = y_high[train_idx]
-        
-        cv_high = xgb.XGBClassifier(max_depth=3, learning_rate=0.05, n_estimators=200, random_state=42, eval_metric='logloss')
-        
-        if len(df_train_high) > 0: 
-            cv_high.fit(df_train_high[feature_cols], y_train_series)
-            
-        if len(df_test_high) > 0 and len(df_train_high) > 0:
-            preds = cv_high.predict_proba(df_test_high[feature_cols])[:, 1]
-            oof_indices.extend(df_test_high.index)
-            dir_probs_oof.extend(preds)
-            
-    oof_indices = np.array(oof_indices)
-    dir_probs_oof = np.array(dir_probs_oof)
-    
-    predicted_direction_oof = np.where(dir_probs_oof > 0.5, 1, 0)
-    actual_direction_oof = direction_target[oof_indices]
-    
-    meta_label = np.where(predicted_direction_oof == actual_direction_oof, 1, 0)
-    
-    X_meta_train = X.iloc[oof_indices].copy()
-    X_meta_train['direction_prob'] = dir_probs_oof
-    
-    if len(X_meta_train) >= 15:
-        meta_model.fit(X_meta_train, meta_label)
-    elif len(X_meta_train) > 0:
-        base_meta.fit(X_meta_train, meta_label)
-        meta_model = base_meta
-    
-    print("\nModel metrics summary")
-    print("==================================")
-    print("Phase 5 Meta Training Completed.")
-    
-    # PHASE 6 — SAVE MODEL
-    composite_model = {
-        "model_high": model_high_vol,
-        "model_low": model_low_vol,
-        "meta_model": meta_model,
-        "feature_cols": feature_cols,
-        "median_vol": float(median_vol)
+
+def _new_model() -> xgb.XGBClassifier:
+    return xgb.XGBClassifier(
+        objective="binary:logistic",
+        eval_metric="logloss",
+        max_depth=2,
+        learning_rate=0.03,
+        n_estimators=140,
+        min_child_weight=3,
+        subsample=0.85,
+        colsample_bytree=0.85,
+        reg_lambda=2.0,
+        random_state=RANDOM_STATE,
+        n_jobs=1,
+    )
+
+
+def _fit_or_constant(X: pd.DataFrame, y: pd.Series):
+    classes = np.unique(y)
+    if len(classes) < 2:
+        return {"constant_probability": float(np.mean(y))}
+    model = _new_model()
+    model.fit(X, y)
+    return model
+
+
+def _predict_probability(model, X: pd.DataFrame) -> np.ndarray:
+    if isinstance(model, dict):
+        return np.full(len(X), model["constant_probability"], dtype=float)
+    return model.predict_proba(X)[:, 1]
+
+
+def _metrics(y_true: np.ndarray, probability: np.ndarray) -> dict:
+    predicted = (probability >= 0.5).astype(int)
+    clipped = np.clip(probability, 1e-6, 1 - 1e-6)
+    return {
+        "n": int(len(y_true)),
+        "accuracy": float(accuracy_score(y_true, predicted)),
+        "balanced_accuracy": float(balanced_accuracy_score(y_true, predicted)),
+        "brier": float(brier_score_loss(y_true, clipped)),
+        "log_loss": float(log_loss(y_true, clipped, labels=[0, 1])),
     }
-    
-    return composite_model, None
+
+
+def walk_forward_evaluation(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Generate expanding-window out-of-sample probabilities.
+
+    Feature definitions are fixed ex ante. No full-sample scaler, target-based
+    feature selection, or random cross-validation is used.
+    """
+    if len(df) < 45:
+        raise ValueError("At least 45 labeled observations are required for the public walk-forward evaluation.")
+
+    X_full = df[MODEL_FEATURES]
+    X_market = df[MARKET_ONLY_FEATURES]
+    y = (df["target_return_t+1"] > 0).astype(int)
+
+    n_splits = min(5, max(3, len(df) // 20))
+    splitter = TimeSeriesSplit(n_splits=n_splits)
+    prediction_rows = []
+
+    for fold, (train_idx, test_idx) in enumerate(splitter.split(X_full), start=1):
+        full_model = _fit_or_constant(X_full.iloc[train_idx], y.iloc[train_idx])
+        market_model = _fit_or_constant(X_market.iloc[train_idx], y.iloc[train_idx])
+
+        p_full = _predict_probability(full_model, X_full.iloc[test_idx])
+        p_market = _predict_probability(market_model, X_market.iloc[test_idx])
+
+        for j, idx in enumerate(test_idx):
+            prediction_rows.append(
+                {
+                    "date": df.loc[idx, "date"],
+                    "fold": fold,
+                    "actual_return_t+1": float(df.loc[idx, "target_return_t+1"]),
+                    "actual_direction_t+1": int(y.iloc[idx]),
+                    "direction_probability_full": float(p_full[j]),
+                    "direction_probability_market_only": float(p_market[j]),
+                    "predicted_direction_full": int(p_full[j] >= 0.5),
+                    "predicted_direction_market_only": int(p_market[j] >= 0.5),
+                }
+            )
+
+    pred = pd.DataFrame(prediction_rows).sort_values("date").reset_index(drop=True)
+    y_oos = pred["actual_direction_t+1"].to_numpy()
+    full_metrics = _metrics(y_oos, pred["direction_probability_full"].to_numpy())
+    market_metrics = _metrics(y_oos, pred["direction_probability_market_only"].to_numpy())
+
+    metrics = pd.DataFrame(
+        [
+            {"model": "market_plus_sentiment", **full_metrics},
+            {"model": "market_only", **market_metrics},
+        ]
+    )
+    return pred, metrics
+
+
+def fit_final_model(df: pd.DataFrame) -> dict:
+    X = df[MODEL_FEATURES]
+    y = (df["target_return_t+1"] > 0).astype(int)
+    model = _fit_or_constant(X, y)
+    if isinstance(model, dict):
+        raise ValueError("Final training sample contains only one direction class.")
+
+    means = X.mean().to_dict()
+    stds = X.std(ddof=1).replace(0, 1.0).fillna(1.0).to_dict()
+    return {
+        "model": model,
+        "feature_cols": MODEL_FEATURES,
+        "market_only_feature_cols": MARKET_ONLY_FEATURES,
+        "feature_mean": means,
+        "feature_std": stds,
+        "training_start": df["date"].min().strftime("%Y-%m-%d"),
+        "training_end": df["date"].max().strftime("%Y-%m-%d"),
+        "model_version": "research-v2",
+        "target": "next_trading_session_direction",
+        "methodology": "expanding-window OOS evaluation; final model refit on all labeled history",
+    }
+
 
 def main():
-    logging.info("Starting Module 5: Multi-Model XGBoost")
+    logging.info("Starting time-safe XGBoost evaluation")
     df = load_data()
-    if df is None: return
-    
-    best_model, predictions = train_and_evaluate(df)
-    
-    model_new_path = os.path.join(os.getcwd(), 'models', 'model_new.pkl')
-    model_live_path = os.path.join(os.getcwd(), 'models', 'model_live.pkl')
-    
-    joblib.dump(best_model, model_new_path)
-    
-    # Validation: Simple sanity check before pushing to live
-    if best_model is not None:
-        if os.path.exists(model_live_path):
-            try: os.remove(model_live_path)
-            except: pass
-        os.rename(model_new_path, model_live_path)
-        logging.info("Atomic update: model_new.pkl -> model_live.pkl")
-    
-    logging.info("Saved artifacts to models/ directory.")
+    predictions, metrics = walk_forward_evaluation(df)
+
+    os.makedirs(os.path.join(os.getcwd(), "outputs"), exist_ok=True)
+    pred_path = os.path.join(os.getcwd(), "outputs", "oos_predictions.csv")
+    metrics_path = os.path.join(os.getcwd(), "outputs", "model_evaluation.csv")
+    predictions.assign(date=predictions["date"].dt.strftime("%Y-%m-%d")).to_csv(pred_path, index=False)
+    metrics.to_csv(metrics_path, index=False)
+
+    artifact = fit_final_model(df)
+    os.makedirs(os.path.join(os.getcwd(), "models"), exist_ok=True)
+    model_path = os.path.join(os.getcwd(), MODEL_PATH)
+    joblib.dump(artifact, model_path)
+
+    model = artifact["model"]
+    if hasattr(model, "feature_importances_"):
+        importance = pd.DataFrame({"feature": MODEL_FEATURES, "importance": model.feature_importances_})
+        importance.sort_values("importance", ascending=False).to_csv(
+            os.path.join(os.getcwd(), "outputs", "feature_importance.csv"), index=False
+        )
+
+    metadata = {k: v for k, v in artifact.items() if k != "model"}
+    with open(os.path.join(os.getcwd(), "models", "news_alpha_xgboost_metadata.json"), "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2)
+
+    logging.info("Saved OOS predictions, evaluation metrics, and canonical model artifact")
+
 
 if __name__ == "__main__":
     main()
