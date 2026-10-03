@@ -2,7 +2,7 @@
 
 The command never calls external APIs. It rebuilds descriptive evidence and
 model features from the committed inputs. Predictive-model performance is only
-reported after the pre-specified out-of-sample reporting threshold is reached.
+reported after the configured out-of-sample reporting threshold is reached.
 """
 
 import logging
@@ -31,7 +31,7 @@ def main():
     if len(labelled) < minimum_public_sample:
         logging.warning(
             "Descriptive results and feature data were rebuilt, but only %s "
-            "labelled model rows are available. The directional model requires "
+            "labelled model rows are available. The directional model uses "
             "%s initial training rows, and this repository requires at least %s "
             "genuine OOS forecasts before model-performance statistics are "
             "reported (minimum %s labelled rows in total).",

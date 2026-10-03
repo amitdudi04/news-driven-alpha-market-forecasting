@@ -1,8 +1,12 @@
 # News-Driven Alpha: Financial Sentiment and CSI 300 Forecasting
 
-This project studies whether **China-focused economic and financial news sentiment adds useful next-session information beyond market-only variables for the CSI 300**.
+This project studies whether **China-focused economic and financial news sentiment adds incremental next-session forecasting information beyond market-only variables for the CSI 300**.
 
-The pipeline combines GDELT title/headline observations, ProsusAI FinBERT sentiment, CSI 300 market data and a shallow XGBoost classifier. A separate GARCH(1,1) model provides one-step-ahead volatility forecasts for paper-strategy risk scaling.
+## Research summary
+
+The committed sample contains **6,919 GDELT title/headline observations across 49 news days**. After end-of-day trading-session alignment, **31 sentiment / next-session-return pairs** are available for descriptive analysis. Raw sentiment has a **Spearman time-series rank correlation of -0.348** with the next-session CSI 300 return, while a naive rule based only on the sign of sentiment is correct on **45.2%** of aligned observations.
+
+These results do not establish a trading edge. Instead, they motivate the project's formal forecasting question: whether rolling sentiment, news intensity and sentiment-volatility interactions improve a **market + sentiment XGBoost model** relative to a **market-only XGBoost baseline** under chronological expanding-window evaluation. **GARCH(1,1) is kept separate from directional forecasting and is used only as a one-step-ahead volatility risk overlay for position scaling.**
 
 ## Research design
 
@@ -18,6 +22,8 @@ trading-session alignment
 CSI 300 return / volatility / momentum
       ↓
 descriptive finance analysis
+      ↓
+configured OOS reporting gate
       ↓
 expanding-window XGBoost evaluation
       ├── market-only baseline
@@ -36,11 +42,11 @@ direction probability + volatility forecast
 paper-trading rule + turnover costs
 ~~~
 
-The target is the **next CSI 300 trading-session return direction**. Weekend and holiday news is aggregated into the next available trading-day information set; no artificial weekend market observations are created.
+The directional target is the **next CSI 300 trading-session return sign**. Weekend and holiday news is aggregated into the next available trading-day information set; no artificial weekend market observations are created.
 
 ## Features
 
-The directional model uses:
+The market + sentiment model uses:
 
 - 20-day market volatility;
 - 5-day and 10-day rolling FinBERT sentiment;
@@ -49,9 +55,9 @@ The directional model uses:
 - news intensity;
 - market momentum and momentum acceleration;
 - sentiment-volatility interaction terms;
-- an ex-ante volatility indicator based only on earlier observations.
+- a volatility indicator constructed only from information available through the forecast date.
 
-The market-only baseline uses volatility, momentum, momentum acceleration and the same ex-ante volatility indicator.
+The market-only baseline uses volatility, momentum, momentum acceleration and the same volatility indicator.
 
 ## Time-series safeguards
 
@@ -65,29 +71,57 @@ The research design uses:
 - no realized-return bootstrap for historical trading signals;
 - one-step-ahead GARCH forecasts rather than in-sample conditional volatility presented as forecasts.
 
-The final inference model may be refit on all labelled history only after the historical OOS evaluation has been produced.
+Feature definitions are fixed before the walk-forward evaluation is run and are not selected using future OOS targets. A separate final inference model may be refit on all labelled history only after historical OOS evaluation.
 
-## Current empirical findings
+## Current empirical evidence
 
-The committed sample begins on **22 April 2026** and contains **6,919 GDELT title/headline observations scored by FinBERT across 49 news days**.
+The committed news/sentiment sample begins on **22 April 2026**.
 
-Trading-session alignment produces **31 sentiment / next-session-return pairs**. In that descriptive sample:
+| Statistic | Current evidence |
+|---|---:|
+| News days | 49 |
+| GDELT title/headline observations scored by FinBERT | 6,919 |
+| Sentiment / next-session-return pairs | 31 |
+| Spearman time-series rank correlation | **-0.348** |
+| Pearson correlation | **-0.246** |
+| Naive sentiment-sign directional hit rate | **45.2%** |
+| Lowest-sentiment tercile mean next-session return | **+0.305%** |
+| Highest-sentiment tercile mean next-session return | **-0.161%** |
+| CSI 300 compounded return from stored session log returns | **+1.56%** |
+| CSI 300 annualized realized volatility | **20.78%** |
 
-- Spearman time-series rank correlation: **-0.348**;
-- Pearson correlation: **-0.246**;
-- naive sentiment-sign directional hit rate: **45.2%**;
-- lowest-sentiment tercile mean next-session return: **+0.305%**;
-- highest-sentiment tercile mean next-session return: **-0.161%**.
+The **+1.56%** figure compounds the 49 stored CSI 300 session log returns and therefore includes the 22 April return measured from the preceding trading close. The first-close to last-close price change from 22 April to 3 July is **+0.89%**; the distinction is documented in the full results file.
 
-Across the 49 aligned CSI 300 sessions, the compounded return implied by the stored daily log returns is **+1.56%** and annualized realized volatility is **20.78%**.
+The descriptive evidence does **not** support a simple rule that more positive news is followed by a higher next-session CSI 300 return. The negative association is exploratory and is not presented as a contrarian trading effect, causal relationship, or statistical proof of predictability.
 
-These statistics are exploratory. They do not establish a causal relationship or a tradable sentiment effect. Instead, they motivate the pre-specified test of whether rolling sentiment, attention and sentiment-volatility interactions improve forecasting beyond the market-only baseline.
+The complete result interpretation is in [docs/RESULTS.md](docs/RESULTS.md).
 
-The full rolling feature set currently leaves **8 labelled model rows**. The directional model is configured to begin walk-forward forecasting after **60 training observations**, but model-performance statistics are not published until at least **30 genuine OOS forecasts** are available. The current repository therefore reports descriptive evidence, not XGBoost accuracy, Sharpe or strategy profitability.
+## Model-evaluation status
 
-See docs/RESULTS.md for the full result interpretation.
+The full rolling feature set currently leaves **8 labelled model rows**, so model-level performance is not reported.
 
-## Run the project
+The configured evaluation design uses:
+
+- **60 labelled observations** for the initial expanding training window; and
+- at least **30 genuine OOS forecasts** before model-performance statistics are reported.
+
+The public pipeline therefore requires at least **90 labelled model rows** before publishing XGBoost accuracy, Sharpe ratio, active return or paper-strategy profitability. The 30-OOS rule is a minimum reporting convention, not a statistical-power claim or evidence that a durable effect has been established.
+
+## Risk and paper-strategy framework
+
+GARCH(1,1) provides one-step-ahead volatility forecasts for position scaling. It does not generate the directional signal.
+
+The paper rule uses:
+
+- p(up) >= 0.55 → LONG;
+- p(up) <= 0.45 → SHORT;
+- otherwise → NO TRADE;
+- absolute position size capped at 1.0x;
+- 10 bps proportional transaction cost per unit of turnover.
+
+Stored market log returns are converted to simple returns before position weighting, transaction costs and wealth compounding.
+
+## Reproducibility
 
 Install dependencies:
 
@@ -101,7 +135,25 @@ Run the saved-data research pipeline:
 python run_research_pipeline.py
 ~~~
 
-The command always rebuilds the descriptive finance summary and model features from committed data. With sufficient history it also runs the XGBoost comparison, GARCH forecasts and OOS paper-strategy evaluation.
+With the current committed sample, this regenerates:
+
+~~~text
+outputs/descriptive_summary.csv
+outputs/sentiment_terciles.csv
+data/final_dataset.csv
+~~~
+
+Generated outputs are excluded from version control so stale local results cannot be mistaken for current evidence.
+
+After the configured OOS reporting threshold is reached, the same pipeline also creates:
+
+~~~text
+outputs/model_evaluation.csv
+outputs/oos_predictions.csv
+outputs/garch_oos_forecasts.csv
+outputs/oos_backtest.csv
+outputs/oos_backtest_metrics.csv
+~~~
 
 An optional daily research refresh is available after a canonical model has been trained:
 
@@ -109,7 +161,7 @@ An optional daily research refresh is available after a canonical model has been
 python run_daily_pipeline.py
 ~~~
 
-Launch the read-only dashboard with:
+Launch the read-only dashboard after running the research pipeline:
 
 ~~~bash
 streamlit run app.py
@@ -127,7 +179,7 @@ config/
   research_config.py
   asset_registry.json
 
-descriptive_analysis.py   reproducible descriptive finance results
+descriptive_analysis.py   reproducible descriptive finance analysis
 module1_news.py            GDELT ingestion
 module2_sentiment.py       FinBERT scoring
 module3_market.py          CSI 300 market data
@@ -148,8 +200,8 @@ tests/
 
 ## Finance interpretation
 
-The economic benchmark is the **CSI 300**. Strategy performance, when enough OOS observations exist, is reported relative to that benchmark as **active return**. The project title uses “Alpha,” but the repository does not claim Jensen's alpha without an explicit asset-pricing regression.
+The economic benchmark is the **CSI 300**. If sufficient OOS evidence becomes available, benchmark-relative strategy performance is reported as **active return**. The project title uses “Alpha,” but the repository does not claim **Jensen's alpha** without an explicit asset-pricing regression.
 
-This is a research and paper-trading project, not a broker-connected trading system. A future positive result would mean that the tested sentiment feature set improved OOS forecasting or benchmark-relative paper-strategy performance on the evaluated sample; it would not by itself establish causality or a durable market anomaly.
+This is a research and paper-trading project, not a broker-connected trading system. Any future positive OOS result would describe performance on the tested sample; it would not by itself establish causality, persistence, economic scalability or a durable market anomaly.
 
-Further methodological detail is in DATA_CARD.md, MODEL_CARD.md, ARCHITECTURE.md, PIPELINE.md and PROJECT_LIMITATIONS.md.
+Further methodological detail is available in [DATA_CARD.md](DATA_CARD.md), [MODEL_CARD.md](MODEL_CARD.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PIPELINE.md](PIPELINE.md) and [PROJECT_LIMITATIONS.md](PROJECT_LIMITATIONS.md).

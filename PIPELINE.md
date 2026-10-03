@@ -12,15 +12,15 @@ The command uses only committed local data. It:
 
 1. reproduces the descriptive finance statistics;
 2. rebuilds trading-session-aligned features;
-3. checks the pre-specified sample-size requirement;
+3. checks the configured sample-size reporting requirement;
 4. runs expanding-window XGBoost evaluation only when sufficient history exists;
-5. compares market-only and market+sentiment models;
+5. compares market-only and market + sentiment models;
 6. estimates one-step-ahead GARCH volatility forecasts;
 7. evaluates the OOS paper strategy with turnover costs.
 
-The directional model uses **60 observations** for the initial expanding training window. Public model-performance statistics require at least **30 subsequent genuine OOS forecasts**, for a minimum of 90 labelled model rows before those metrics are reported.
+The directional model uses **60 observations** for the initial expanding training window. Public model-performance statistics require at least **30 subsequent genuine OOS forecasts**, for a minimum of **90 labelled model rows** before those metrics are reported.
 
-With the current shorter sample, the pipeline still produces the descriptive result files and feature dataset but stops before publishing model-performance or strategy-performance statistics.
+The 30-OOS threshold is a minimum reporting convention rather than a claim of statistical sufficiency. With the current shorter sample, the pipeline produces the descriptive result files and feature dataset but does not publish model-performance or strategy-performance statistics.
 
 ## Optional daily refresh
 

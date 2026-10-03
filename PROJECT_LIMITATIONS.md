@@ -6,7 +6,7 @@ The committed GDELT/FinBERT sample begins on 2026-04-22. Public-API availability
 
 ## News measurement
 
-FinBERT is applied to GDELT title/headline text retained by the pipeline rather than full article bodies. The GDELT query is China-focused but is not a complete measure of all information reaching investors.
+FinBERT is applied to GDELT title/headline text retained by the pipeline rather than full article bodies. The GDELT query is China-focused but is not a complete measure of all information reaching investors. Headline volume is used as a **news-intensity measure**, not as a direct observation of investor attention.
 
 ## End-of-day timing convention
 
@@ -14,9 +14,13 @@ The saved sentiment data are daily aggregates rather than article-level timestam
 
 ## Model evaluation
 
-XGBoost evaluation uses expanding chronological splits. Feature definitions are fixed ex ante, and the pipeline does not fit a scaler or perform target-based feature selection on the full sample.
+XGBoost evaluation uses expanding chronological splits. Feature definitions are fixed before the walk-forward evaluation is run and are not selected using future OOS targets. The pipeline does not fit a scaler or perform target-based feature selection on the full sample.
 
-The first forecast can be produced after a 60-observation initial training window, but public performance statistics require at least 30 subsequent OOS forecasts. That reporting rule is a minimum safeguard, not evidence that the resulting sample would be sufficient to establish a durable anomaly.
+The expanding-window design uses a 60-observation initial training window, while public performance statistics require at least 30 subsequent OOS forecasts. That reporting rule is a minimum safeguard, not a statistical-power guarantee or evidence that the resulting sample would establish a durable anomaly.
+
+## Descriptive inference
+
+The current correlations and sentiment-sorted returns are descriptive statistics from 31 aligned observations. They are not presented as statistically significant estimates, causal effects, a contrarian anomaly, or proof that sentiment is predictively useful.
 
 ## Risk overlay and backtest
 
