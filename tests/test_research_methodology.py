@@ -172,7 +172,12 @@ class DescriptiveResultsTests(unittest.TestCase):
         )
         self.assertAlmostEqual(
             float(row["compounded_return_from_stored_session_log_returns"]),
-            0.011367028547711877,
+            0.015555772205326897,
+            places=10,
+        )
+        self.assertAlmostEqual(
+            float(row["first_close_to_last_close_change"]),
+            0.0088631915587567,
             places=10,
         )
         self.assertAlmostEqual(
