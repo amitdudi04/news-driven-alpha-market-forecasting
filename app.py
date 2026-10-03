@@ -28,19 +28,24 @@ def metric_text(value, percent=False, digits=3):
 
 st.title("News-Driven Alpha")
 st.caption(
-    "Research dashboard for CSI 300 next-session direction forecasting "
-    "using GDELT news, FinBERT sentiment, XGBoost and a GARCH risk overlay."
+    "CSI 300 research dashboard for China-focused news sentiment, "
+    "next-session direction forecasting and a separate GARCH volatility-risk overlay."
 )
 
 st.sidebar.header("Research workflow")
 st.sidebar.code("python run_research_pipeline.py")
 st.sidebar.caption(
-    "The dashboard is read-only. Model fitting and backtesting happen in the research pipeline."
+    "The dashboard is read-only. Descriptive analysis, model fitting and "
+    "backtesting are produced by the research pipeline."
 )
 
 news = load_csv("data/news_daily.csv", parse_dates=["date"])
 sentiment = load_csv("data/sentiment_features.csv", parse_dates=["date"])
 market = load_csv("data/csi300_features.csv", parse_dates=["date"])
+
+descriptive_summary = load_csv("outputs/descriptive_summary.csv")
+sentiment_terciles = load_csv("outputs/sentiment_terciles.csv")
+
 evaluation = load_csv("outputs/model_evaluation.csv")
 predictions = load_csv("outputs/oos_predictions.csv", parse_dates=["date"])
 backtest = load_csv("outputs/oos_backtest.csv", parse_dates=["date"])
@@ -53,42 +58,107 @@ overview_tab, data_tab, model_tab, backtest_tab, signal_tab = st.tabs(
 )
 
 with overview_tab:
-    cols = st.columns(4)
-    clean_news_days = len(news) if news is not None else 0
-    market_days = len(market) if market is not None else 0
-    oos_n = (
-        int(evaluation["n"].max())
-        if evaluation is not None and not evaluation.empty and "n" in evaluation
-        else 0
-    )
-    latest_market = (
-        market["date"].max().strftime("%Y-%m-%d")
-        if market is not None and not market.empty
-        else "—"
-    )
-    cols[0].metric("News days", clean_news_days)
-    cols[1].metric("CSI 300 observations", market_days)
-    cols[2].metric("OOS predictions", oos_n)
-    cols[3].metric("Latest market date", latest_market)
-
     st.markdown(
         """
-        The research question is whether daily financial-news sentiment adds
-        incremental next-session directional information beyond market-only
-        volatility and momentum features. The public evaluation uses expanding
-        chronological splits and compares a **market + sentiment** XGBoost model
-        against a **market-only** baseline.
+        The research question is whether **China-focused economic and financial
+        news sentiment adds incremental next-session information beyond
+        market-only variables for the CSI 300**.
 
-        GARCH(1,1) is used separately as a one-step-ahead volatility forecast for
-        risk scaling. It is not used to manufacture the directional target.
+        The directional comparison is a **market + sentiment XGBoost model**
+        versus a **market-only XGBoost baseline** under chronological
+        expanding-window evaluation. GARCH(1,1) is estimated separately and is
+        used only for one-step-ahead volatility risk scaling.
         """
     )
 
-    if news is not None and not news.empty:
+    if descriptive_summary is not None and not descriptive_summary.empty:
+        row = descriptive_summary.iloc[-1]
+        cols = st.columns(4)
+        cols[0].metric(
+            "Headline observations",
+            f"{int(row.get('headline_title_observations', 0)):,}",
+        )
+        cols[1].metric(
+            "Aligned sentiment-return pairs",
+            int(row.get("sentiment_next_return_pairs", 0)),
+        )
+        cols[2].metric(
+            "Spearman rank correlation",
+            metric_text(
+                row.get("spearman_time_series_rank_correlation"),
+                digits=3,
+            ),
+        )
+        cols[3].metric(
+            "CSI 300 compounded return",
+            metric_text(
+                row.get("compounded_return_from_stored_session_log_returns"),
+                percent=True,
+                digits=2,
+            ),
+        )
+
+        cols = st.columns(4)
+        cols[0].metric("News days", int(row.get("news_days", 0)))
+        cols[1].metric(
+            "Naive sentiment-sign hit rate",
+            metric_text(
+                row.get("naive_sentiment_sign_hit_rate"),
+                percent=True,
+                digits=1,
+            ),
+        )
+        cols[2].metric(
+            "Annualized realized volatility",
+            metric_text(
+                row.get("annualized_realized_volatility"),
+                percent=True,
+                digits=2,
+            ),
+        )
+        cols[3].metric(
+            "Labelled model rows",
+            int(row.get("labelled_model_rows", 0)),
+        )
+
+        st.caption(
+            "The current statistics are descriptive. They do not establish "
+            "statistical significance, causality or a tradable sentiment effect."
+        )
+
+        if sentiment_terciles is not None and not sentiment_terciles.empty:
+            st.subheader("Sentiment-sorted next-session returns")
+            display_terciles = sentiment_terciles.copy()
+            display_terciles["mean_next_session_return"] = (
+                display_terciles["mean_next_session_return"].astype(float) * 100
+            )
+            display_terciles["next_session_positive_rate"] = (
+                display_terciles["next_session_positive_rate"].astype(float) * 100
+            )
+            display_terciles = display_terciles.rename(
+                columns={
+                    "sentiment_group": "Sentiment group",
+                    "observations": "Observations",
+                    "mean_sentiment": "Mean sentiment",
+                    "mean_next_session_return": "Mean next-session return (%)",
+                    "next_session_positive_rate": "Next session positive (%)",
+                }
+            )
+            st.dataframe(
+                display_terciles,
+                use_container_width=True,
+                hide_index=True,
+            )
+    else:
         st.info(
-            f"Current committed news sample: {news['date'].min().date()} "
-            f"to {news['date'].max().date()}. "
-            "The clean history is short, so any generated performance result should be treated as exploratory."
+            "Run python run_research_pipeline.py to generate the reproducible "
+            "descriptive summary shown on this page."
+        )
+
+    if news is not None and not news.empty:
+        st.caption(
+            f"Committed news sample: {news['date'].min().date()} "
+            f"to {news['date'].max().date()}."
         )
 
 with data_tab:
@@ -108,17 +178,20 @@ with data_tab:
             go.Bar(
                 x=sentiment["date"],
                 y=sentiment["article_count"],
-                name="Article count",
+                name="Title/headline observations",
                 opacity=0.35,
             ),
             secondary_y=True,
         )
         fig.update_layout(
-            title="Daily financial-news sentiment and article volume",
+            title="Daily China-focused news sentiment and headline volume",
             hovermode="x unified",
         )
         fig.update_yaxes(title_text="Sentiment", secondary_y=False)
-        fig.update_yaxes(title_text="Articles", secondary_y=True)
+        fig.update_yaxes(
+            title_text="Title/headline observations",
+            secondary_y=True,
+        )
         st.plotly_chart(fig, use_container_width=True)
 
     if market is not None and not market.empty:
@@ -140,8 +213,9 @@ with data_tab:
 with model_tab:
     if evaluation is None or evaluation.empty:
         st.info(
-            "No OOS evaluation is available for the current sample. "
-            "Run the research pipeline after extending the clean news history."
+            "Model-performance statistics are not available for the current "
+            "sample because the configured OOS reporting threshold has not "
+            "been reached."
         )
     else:
         st.subheader("Market-only versus market + sentiment")
@@ -197,8 +271,8 @@ with model_tab:
 with backtest_tab:
     if backtest is None or backtest.empty:
         st.info(
-            "No OOS backtest is available for the current sample. "
-            "Generated backtest files are intentionally kept out of Git."
+            "No OOS paper-strategy backtest is reportable for the current "
+            "sample. Generated backtest outputs remain outside version control."
         )
     else:
         fig = go.Figure()
@@ -247,8 +321,8 @@ with backtest_tab:
 with signal_tab:
     if latest_signal is None or latest_signal.empty:
         st.info(
-            "No paper-trading signal has been generated in this checkout. "
-            "Run the daily research refresh after a canonical model artifact exists."
+            "No paper-trading signal is available in this checkout. "
+            "The daily research refresh requires a trained canonical model artifact."
         )
     else:
         row = latest_signal.iloc[-1]
