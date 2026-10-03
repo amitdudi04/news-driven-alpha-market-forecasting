@@ -20,9 +20,16 @@ def _max_drawdown(wealth: pd.Series) -> float:
 
 
 def build_backtest(predictions: pd.DataFrame, garch: pd.DataFrame) -> pd.DataFrame:
+    garch = garch.sort_values("date").reset_index(drop=True).copy()
+    # The volatility target for day t is computed from GARCH forecasts that
+    # existed strictly before t, using the complete market forecast history.
+    garch["target_volatility"] = (
+        garch["pred_vol_t+1"].shift(1).expanding(min_periods=5).median()
+    )
+
     df = pd.merge(
         predictions,
-        garch[["date", "pred_vol_t+1"]],
+        garch[["date", "pred_vol_t+1", "target_volatility"]],
         on="date",
         how="inner",
     )
@@ -40,15 +47,8 @@ def build_backtest(predictions: pd.DataFrame, garch: pd.DataFrame) -> pd.DataFra
         default=0.0,
     )
 
-    # The risk target uses only forecasts observed before the current decision.
-    prior_target_vol = (
-        df["pred_vol_t+1"]
-        .shift(1)
-        .expanding(min_periods=5)
-        .median()
-    )
     scale = (
-        prior_target_vol
+        df["target_volatility"]
         / df["pred_vol_t+1"].replace(0, np.nan)
     ).clip(lower=0.0, upper=MAX_ABS_POSITION)
     scale = scale.fillna(1.0)
