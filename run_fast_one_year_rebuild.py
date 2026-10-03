@@ -25,7 +25,7 @@ import torch
 from google.cloud import bigquery
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from bigquery_gdelt_backfill import append_manifest, normalize_rows
+from bigquery_gdelt_backfill import append_manifest
 from finbert_backfill import MODEL_NAME, score_day
 
 
@@ -123,6 +123,89 @@ def query_config(start_date: dt.date, end_date: dt.date):
     )
 
 
+def normalize_week_rows(rows) -> pd.DataFrame:
+    """Normalize and deduplicate within each Shanghai calendar day."""
+    records = [dict(row.items()) for row in rows]
+    if not records:
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "datetime_utc",
+                "title",
+                "url",
+                "domain",
+                "language",
+            ]
+        )
+
+    frame = pd.DataFrame(records)
+    frame["datetime_utc"] = pd.to_datetime(
+        frame["datetime_utc"],
+        utc=True,
+        errors="coerce",
+    )
+    frame["title"] = (
+        frame["title"].fillna("").astype(str).str.strip()
+    )
+    frame["url"] = (
+        frame["url"].fillna("").astype(str).str.strip()
+    )
+    frame["domain"] = (
+        frame["domain"].fillna("").astype(str).str.strip()
+    )
+    frame["language"] = (
+        frame["language"].fillna("").astype(str).str.strip()
+    )
+    frame = frame.dropna(subset=["datetime_utc"])
+    frame = frame[frame["title"].str.len() > 15].copy()
+
+    shanghai = frame["datetime_utc"].dt.tz_convert(
+        "Asia/Shanghai"
+    )
+    frame["date"] = shanghai.dt.strftime("%Y-%m-%d")
+
+    url_key = frame["url"].str.casefold()
+    fallback_key = (
+        frame["datetime_utc"].astype(str)
+        + "|"
+        + frame["title"].str.casefold()
+    )
+    frame["dedup_key"] = url_key.where(
+        url_key.str.len() > 0,
+        fallback_key,
+    )
+    frame = frame.drop_duplicates(
+        subset=["date", "dedup_key"],
+        keep="first",
+    ).copy()
+
+    frame["title_key"] = (
+        frame["title"]
+        .str.casefold()
+        .str.replace(r"\s+", " ", regex=True)
+        .str.strip()
+    )
+    frame = frame.drop_duplicates(
+        subset=["date", "title_key"],
+        keep="first",
+    ).copy()
+
+    return (
+        frame[
+            [
+                "date",
+                "datetime_utc",
+                "title",
+                "url",
+                "domain",
+                "language",
+            ]
+        ]
+        .sort_values(["date", "datetime_utc", "title"])
+        .reset_index(drop=True)
+    )
+
+
 def collect_week(
     client: bigquery.Client,
     week_start: dt.date,
@@ -163,7 +246,7 @@ def collect_week(
             job_config=query_config(range_start, range_end),
         )
         raw_rows = list(job.result())
-        frame = normalize_rows(raw_rows)
+        frame = normalize_week_rows(raw_rows)
 
         range_dates = [
             value.date()
