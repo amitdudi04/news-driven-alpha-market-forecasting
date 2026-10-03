@@ -66,25 +66,23 @@ The research code deliberately avoids several common sources of optimistic backt
 
 XGBoost evaluation uses expanding chronological splits. The final model used for the next paper-trading prediction is refit only **after** the historical out-of-sample evaluation has been produced.
 
-## Current empirical status
+## Current empirical findings
 
-The committed clean news/sentiment sample begins on **22 April 2026**. The earlier development seed rows are not part of the public research sample.
+The committed clean news/sentiment sample begins on **22 April 2026** and contains **6,919 FinBERT-scored headline/article inputs across 49 news days**.
 
-The clean history is still too short for a defensible claim of persistent alpha. For that reason, the repository does not publish the old high-accuracy/high-Sharpe development trace as a research result. The canonical runner builds the feature dataset and stops cleanly until at least 61 labelled rows remain after feature construction (60 initial training rows plus at least one out-of-sample forecast).
+The clean sample currently provides **31 aligned sentiment / next-session-return observations**. At the raw-sentiment level:
 
-The intended empirical comparison is saved to:
+- Spearman rank IC with the next-session CSI 300 return: **-0.348**;
+- Pearson correlation: **-0.246**;
+- naive sentiment-sign directional hit rate: **45.2%**;
+- lowest-sentiment tercile mean next-session return: **+0.305%**;
+- highest-sentiment tercile mean next-session return: **-0.161%**.
 
-```text
-outputs/model_evaluation.csv
-outputs/oos_predictions.csv
-outputs/garch_oos_forecasts.csv
-outputs/oos_backtest.csv
-outputs/oos_backtest_metrics.csv
-```
+These are descriptive finance results, not a claim of model alpha. They indicate that raw news tone is not a simple monotonic next-session signal in this short sample and motivate the project's interaction and regime features.
 
-These files are generated locally and are intentionally not committed.
+The full rolling feature set currently leaves **8 labelled model rows**, so model-level OOS accuracy, Sharpe and active-return statistics are not reported yet. The expanding-window evaluation starts only after 60 training observations plus at least one unseen forecast observation are available.
 
-For a finance-oriented summary of the evidence currently supported by the repository, see [`docs/RESULTS.md`](docs/RESULTS.md).
+For the complete result interpretation, market statistics and finance discussion, see [`docs/RESULTS.md`](docs/RESULTS.md).
 
 ## Run the project
 
