@@ -80,65 +80,55 @@ def load_checkpoint(path: Path) -> dict | None:
 
 
 def base_state(data_dir: Path) -> dict:
-    news_path = data_dir / "news_daily_bigquery_2023_2025.csv"
-    sentiment_path = (
-        data_dir / "sentiment_features_bigquery_2023_2025.csv"
+    """Load the already validated 2023-2025 baseline from small summaries."""
+    news_summary_path = (
+        data_dir / "bigquery_backfill_2023_2025_summary.json"
     )
-    if not news_path.exists() or not sentiment_path.exists():
+    sentiment_summary_path = (
+        data_dir / "finbert_backfill_2023_2025_summary.json"
+    )
+    if (
+        not news_summary_path.exists()
+        or not sentiment_summary_path.exists()
+    ):
         raise FileNotFoundError(
-            "Validated 2023-2025 candidate datasets are required."
+            "Validated 2023-2025 summary files are required."
         )
 
-    news = pd.read_csv(news_path)
-    sentiment = pd.read_csv(sentiment_path)
-    news["date"] = news["date"].astype(str)
-    sentiment["date"] = sentiment["date"].astype(str)
-
-    if news["date"].max() != BASE_END.isoformat():
-        raise ValueError(
-            "2023-2025 news baseline does not end on 2025-12-31."
-        )
-    if sentiment["date"].max() != BASE_END.isoformat():
-        raise ValueError(
-            "2023-2025 sentiment baseline does not end on 2025-12-31."
-        )
-
-    merged = news[
-        ["date", "article_count", "headline_hash"]
-    ].merge(
-        sentiment[
-            ["date", "article_count", "headline_hash"]
-        ],
-        on="date",
-        how="outer",
-        suffixes=("_news", "_sentiment"),
-        indicator=True,
+    news = json.loads(
+        news_summary_path.read_text(encoding="utf-8")
     )
-    if not (merged["_merge"] == "both").all():
-        raise ValueError(
-            "2023-2025 baseline news/sentiment date mismatch."
-        )
-    if not (
-        merged["article_count_news"]
-        == merged["article_count_sentiment"]
-    ).all():
-        raise ValueError(
-            "2023-2025 baseline article-count mismatch."
-        )
-    if not (
-        merged["headline_hash_news"]
-        == merged["headline_hash_sentiment"]
-    ).all():
-        raise ValueError(
-            "2023-2025 baseline headline-hash mismatch."
-        )
+    sentiment = json.loads(
+        sentiment_summary_path.read_text(encoding="utf-8")
+    )
+
+    if news.get("requested_start") != BASE_START.isoformat():
+        raise ValueError("Unexpected 2023-2025 baseline start date.")
+    if news.get("requested_end") != BASE_END.isoformat():
+        raise ValueError("Unexpected 2023-2025 baseline end date.")
+    if int(news.get("duplicate_title_date_pairs_remaining", -1)) != 0:
+        raise ValueError("Baseline still contains duplicate title/day pairs.")
+    if int(sentiment.get("article_count_mismatches", -1)) != 0:
+        raise ValueError("Baseline article-count mismatch remains.")
+    if int(sentiment.get("headline_hash_mismatches", -1)) != 0:
+        raise ValueError("Baseline headline-hash mismatch remains.")
+
+    news_days = int(news["calendar_days_with_news"])
+    sentiment_days = int(
+        sentiment["overlapping_validated_days"]
+    )
+    headlines = int(news["unique_retained_headlines"])
+    scored = int(sentiment["total_headlines_scored"])
+
+    if news_days != sentiment_days:
+        raise ValueError("Baseline news/sentiment day counts differ.")
+    if headlines != scored:
+        raise ValueError("Baseline headline/scored counts differ.")
 
     return {
-        "calendar_days": (
-            BASE_END - BASE_START
-        ).days + 1,
-        "news_days": int(len(news)),
-        "headlines": int(news["article_count"].sum()),
+        "calendar_days": int(news["calendar_days_requested"]),
+        "news_days": news_days,
+        "headlines": headlines,
     }
 
 
