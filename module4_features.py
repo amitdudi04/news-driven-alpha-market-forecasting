@@ -71,6 +71,12 @@ def align_sentiment_to_trading_days(sent_df: pd.DataFrame, market_df: pd.DataFra
     sent = sent_df.copy().sort_values("date").reset_index(drop=True)
     market = market_df.copy().sort_values("date").reset_index(drop=True)
 
+    if sent.empty:
+        raise ValueError("Sentiment dataset is empty.")
+    # Do not create a long pre-news training history by treating missing news as
+    # neutral. The research sample begins when genuine sentiment observations begin.
+    market = market[market["date"] >= sent["date"].min()].reset_index(drop=True)
+
     required_sent = {"date", "sentiment_mean", "sentiment_std", "article_count"}
     required_market = {"date", "close", "return", "volatility"}
     if not required_sent.issubset(sent.columns):
