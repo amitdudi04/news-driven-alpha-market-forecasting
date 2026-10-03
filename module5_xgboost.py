@@ -8,7 +8,10 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, brier_score_loss, log_loss
 
-from config.research_config import RANDOM_STATE
+from config.research_config import (
+    MIN_DIRECTION_TRAIN_OBSERVATIONS,
+    RANDOM_STATE,
+)
 from module4_features import MARKET_ONLY_FEATURES, MODEL_FEATURES
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -77,11 +80,11 @@ def walk_forward_evaluation(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
     full-sample scaler, target-based feature selection, or random
     cross-validation is used.
     """
-    min_train = 60
+    min_train = MIN_DIRECTION_TRAIN_OBSERVATIONS
     if len(df) <= min_train:
         raise ValueError(
-            "More than 60 labelled observations are required after feature "
-            "construction for the public walk-forward evaluation."
+            f"More than {MIN_DIRECTION_TRAIN_OBSERVATIONS} labelled observations "
+            "are required after feature construction for walk-forward evaluation."
         )
 
     X_full = df[MODEL_FEATURES]
