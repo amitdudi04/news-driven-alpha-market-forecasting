@@ -2,7 +2,7 @@
 
 ## Short news history
 
-The committed GDELT/FinBERT sample begins on 2026-04-22. Public-API availability and coverage gaps leave the present sample too short for claims about a persistent forecasting or trading effect.
+The committed GDELT/FinBERT sample begins on 2026-04-22 and contains only 49 news days. Public-API availability and coverage gaps leave the present sample too short for credible machine-learning validation or claims about a persistent forecasting or trading effect.
 
 ## News measurement
 
@@ -26,8 +26,8 @@ The current correlations and sentiment-sorted returns are descriptive statistics
 
 GARCH(1,1) is used as a one-step-ahead volatility forecast for position scaling. It is a risk overlay, not evidence that sentiment causes volatility.
 
-Paper-strategy calculations convert stored market log returns to simple returns before applying position weights and transaction costs. Sharpe ratios, when reported, use a zero risk-free-rate convention unless otherwise stated.
+Simulated-strategy calculations convert stored market log returns to simple returns before applying position weights and transaction costs. Sharpe ratios, when reported, use a zero risk-free-rate convention unless otherwise stated.
 
 ## Interpretation
 
-This is a research and paper-trading project. It does not trade live capital, and descriptive associations or future paper-strategy metrics should not be interpreted as investment advice, causal evidence, or proof of a durable market anomaly.
+This is a research prototype with an optional simulated-strategy layer. It does not trade live capital, and descriptive associations or future simulation metrics should not be interpreted as investment advice, causal evidence, or proof of a durable market anomaly.
