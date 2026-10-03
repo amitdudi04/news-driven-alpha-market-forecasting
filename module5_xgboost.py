@@ -10,6 +10,7 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, brier_score
 
 from config.research_config import (
     MIN_DIRECTION_TRAIN_OBSERVATIONS,
+    MIN_OOS_REPORTING_OBSERVATIONS,
     RANDOM_STATE,
 )
 from module4_features import MARKET_ONLY_FEATURES, MODEL_FEATURES
@@ -173,6 +174,17 @@ def fit_final_model(df: pd.DataFrame) -> dict:
 def main():
     logging.info("Starting time-safe XGBoost evaluation")
     df = load_data()
+    minimum_reporting_sample = (
+        MIN_DIRECTION_TRAIN_OBSERVATIONS + MIN_OOS_REPORTING_OBSERVATIONS
+    )
+    if len(df) < minimum_reporting_sample:
+        raise ValueError(
+            f"At least {minimum_reporting_sample} labelled rows are required "
+            f"to publish model-performance statistics: "
+            f"{MIN_DIRECTION_TRAIN_OBSERVATIONS} initial training rows plus "
+            f"{MIN_OOS_REPORTING_OBSERVATIONS} genuine OOS forecasts."
+        )
+
     predictions, metrics = walk_forward_evaluation(df)
 
     os.makedirs(os.path.join(os.getcwd(), "outputs"), exist_ok=True)
