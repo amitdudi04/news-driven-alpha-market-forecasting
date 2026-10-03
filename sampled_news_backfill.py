@@ -107,6 +107,9 @@ def request_daily_candidates(
                         30 * (2**attempt),
                         600,
                     )
+                last_error = RuntimeError(
+                    f"HTTP 429 rate limit; retry after {wait_seconds}s"
+                )
                 logging.warning(
                     "GDELT 429 for %s; waiting %ss before retry %s/%s",
                     run_date,
@@ -364,8 +367,8 @@ def main() -> None:
     )
     parser.add_argument("--request-records", type=int, default=150)
     parser.add_argument("--target-headlines", type=int, default=100)
-    parser.add_argument("--timeout-seconds", type=int, default=120)
-    parser.add_argument("--max-retries", type=int, default=8)
+    parser.add_argument("--timeout-seconds", type=int, default=45)
+    parser.add_argument("--max-retries", type=int, default=3)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
 

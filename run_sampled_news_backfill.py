@@ -38,11 +38,11 @@ def main() -> None:
     parser.add_argument(
         "--inter-day-sleep",
         type=float,
-        default=6.5,
+        default=10.0,
         help="Keep above GDELT's published one-request-per-5-seconds limit.",
     )
-    parser.add_argument("--timeout-seconds", type=int, default=120)
-    parser.add_argument("--max-retries", type=int, default=8)
+    parser.add_argument("--timeout-seconds", type=int, default=45)
+    parser.add_argument("--max-retries", type=int, default=3)
     parser.add_argument("--max-days", type=int)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
