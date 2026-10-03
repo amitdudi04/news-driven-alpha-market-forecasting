@@ -70,7 +70,7 @@ XGBoost evaluation uses expanding chronological splits. The final model used for
 
 The committed clean news/sentiment sample begins on **22 April 2026**. The earlier development seed rows are not part of the public research sample.
 
-The clean history is still too short for a defensible claim of persistent alpha. For that reason, the repository does not publish the old high-accuracy/high-Sharpe development trace as a research result. The canonical runner builds the feature dataset and stops cleanly until at least 60 labelled rows remain after feature construction.
+The clean history is still too short for a defensible claim of persistent alpha. For that reason, the repository does not publish the old high-accuracy/high-Sharpe development trace as a research result. The canonical runner builds the feature dataset and stops cleanly until at least 61 labelled rows remain after feature construction (60 initial training rows plus at least one out-of-sample forecast).
 
 The intended empirical comparison is saved to:
 
