@@ -90,6 +90,8 @@ The committed news/sentiment sample begins on **22 April 2026**.
 | CSI 300 compounded return from stored session log returns | **+1.56%** |
 | CSI 300 annualized realized volatility | **20.78%** |
 
+The **+1.56%** figure compounds the 49 stored CSI 300 session log returns and therefore includes the 22 April return measured from the preceding trading close. The first-close to last-close price change from 22 April to 3 July is **+0.89%**; the distinction is documented in the full results file.
+
 The descriptive evidence does **not** support a simple rule that more positive news is followed by a higher next-session CSI 300 return. The negative association is exploratory and is not presented as a contrarian trading effect, causal relationship, or statistical proof of predictability.
 
 The complete result interpretation is in [docs/RESULTS.md](docs/RESULTS.md).
