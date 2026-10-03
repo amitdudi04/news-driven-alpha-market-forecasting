@@ -84,6 +84,8 @@ outputs/oos_backtest_metrics.csv
 
 These files are generated locally and are intentionally not committed.
 
+For a finance-oriented summary of the evidence currently supported by the repository, see [`docs/RESULTS.md`](docs/RESULTS.md).
+
 ## Run the project
 
 Install dependencies:
@@ -137,6 +139,8 @@ module13_signal_engine.py paper-signal construction
 run_research_pipeline.py
 run_daily_pipeline.py
 app.py
+docs/
+  RESULTS.md
 tests/
 ```
 
