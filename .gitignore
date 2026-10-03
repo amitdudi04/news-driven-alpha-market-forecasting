@@ -69,3 +69,6 @@ data/one_year_2023_progress.jsonl
 data/two_year_2024_2025_checkpoints/
 data/two_year_2024_2025_progress.jsonl
 data/two_year_2024_2025_fast.log
+data/year_2026_checkpoints/
+data/year_2026_progress.jsonl
+data/year_2026_fast.log
