@@ -1,116 +1,147 @@
-# News-Driven Alpha for Financial Market Forecasting
+# News-Driven Alpha: Financial Sentiment and CSI 300 Forecasting
 
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Python](https://img.shields.io/badge/python-3.13-blue)
+This project studies a simple research question: **does daily financial-news sentiment add useful next-session information beyond market-only features?**
 
-A machine learning pipeline that integrates financial news sentiment, market data, and regime-aware modeling to generate daily market forecasts and paper trading signals. The system combines FinBERT sentiment analysis, GDELT news data, feature engineering, and XGBoost-based classification within a reproducible forecasting workflow.
+The pipeline combines GDELT headlines, ProsusAI FinBERT sentiment, CSI 300 market data and a shallow XGBoost classifier. A separate GARCH(1,1) model forecasts next-session volatility for paper-strategy risk scaling.
 
----
+## Research design
 
-## Motivation
+The public experiment is organized around one timeline:
 
-Financial markets react rapidly to macroeconomic events, geopolitical developments, and breaking news. Traditional quantitative models often struggle to incorporate unstructured textual information in real time.
+```text
+GDELT headlines
+      ↓
+FinBERT article sentiment
+      ↓
+daily sentiment aggregates
+      ↓
+trading-session alignment
+      +
+CSI 300 return / volatility / momentum
+      ↓
+expanding-window XGBoost evaluation
+      ├── market-only baseline
+      └── market + sentiment model
+      ↓
+next-session direction probability
 
-This project investigates whether financial news sentiment can improve short-term market forecasting by combining natural language processing, market features, and machine learning in an end-to-end prediction pipeline.
+CSI 300 returns
+      ↓
+one-step-ahead GARCH(1,1)
+      ↓
+volatility risk forecast
 
----
+direction probability + volatility forecast
+      ↓
+paper-trading rule + turnover costs
+```
 
-## Key Features
+The target is the **next CSI 300 trading-session return direction**. Weekend and holiday news is aggregated into the next available trading-day information set, but no artificial weekend market rows are created.
 
-- Financial news ingestion using the GDELT API
-- Sentiment analysis using ProsusAI FinBERT
-- Market data collection using yfinance
-- Automated feature engineering pipeline
-- Regime-aware XGBoost prediction model
-- Daily inference and signal generation
-- Streamlit dashboard for monitoring
-- Paper trading workflow
-- Regression testing for reproducibility
+## Features
 
----
+The directional model uses:
 
-## Architecture
+- 20-day market volatility
+- 5-day and 10-day rolling FinBERT sentiment
+- rolling sentiment z-score
+- sentiment momentum and sentiment dispersion
+- news intensity
+- market momentum and momentum acceleration
+- sentiment × volatility interaction terms
+- an ex-ante high/low-volatility indicator based only on earlier observations
 
-The forecasting pipeline consists of the following stages:
+The market-only baseline uses volatility, momentum, momentum acceleration and the same ex-ante regime indicator.
 
-1. News Extraction (GDELT API)
-2. Financial Sentiment Analysis (FinBERT)
-3. Market Data Collection (yfinance)
-4. Feature Engineering
-5. XGBoost-Based Forecasting
-6. Signal Generation
-7. Dashboard & Monitoring
+## Time-series safeguards
 
----
+The research code deliberately avoids several common sources of optimistic backtests:
 
-## Technology Stack
+- no random train/test split;
+- no full-sample StandardScaler;
+- no full-sample target-based feature selection;
+- no future volatility median for regime assignment;
+- no use of realized returns to manufacture historical trading signals;
+- no in-sample GARCH conditional volatility presented as a one-step forecast.
 
-- Python
-- Pandas
-- NumPy
-- Scikit-learn
-- XGBoost
-- FinBERT
-- GDELT API
-- yfinance
-- Streamlit
+XGBoost evaluation uses expanding chronological splits. The final model used for the next paper-trading prediction is refit only **after** the historical out-of-sample evaluation has been produced.
 
----
+## Current empirical status
 
-## Quick Start
+The committed clean news/sentiment sample begins on **22 April 2026**. The earlier development seed rows are not part of the public research sample.
+
+The clean history is still too short for a defensible claim of persistent alpha. For that reason, the repository does not publish the old high-accuracy/high-Sharpe development trace as a research result. The canonical runner builds the feature dataset and stops cleanly until at least 60 labelled rows remain after feature construction.
+
+The intended empirical comparison is saved to:
+
+```text
+outputs/model_evaluation.csv
+outputs/oos_predictions.csv
+outputs/garch_oos_forecasts.csv
+outputs/oos_backtest.csv
+outputs/oos_backtest_metrics.csv
+```
+
+These files are generated locally and are intentionally not committed.
+
+## Run the project
+
+Install dependencies:
 
 ```bash
-# Clone repository
-git clone https://github.com/amitdudi04/amitdudi04-news-driven-alpha-market-forecasting.git
-
-# Enter project folder
-cd amitdudi04-news-driven-alpha-market-forecasting
-
-# Install dependencies
 pip install -r requirements.txt
+```
 
-# Run the forecasting pipeline
+Build the saved-data research experiment:
+
+```bash
+python run_research_pipeline.py
+```
+
+With the current short clean sample, this command builds the feature dataset and reports that more history is required before OOS results are published.
+
+An optional daily research refresh is available once a canonical model has been trained:
+
+```bash
 python run_daily_pipeline.py
+```
 
-# Launch dashboard
+Launch the read-only Streamlit dashboard:
+
+```bash
 streamlit run app.py
 ```
 
----
+## Repository structure
 
-## Repository Structure
-
-```
-config/
+```text
 data/
-docs/
-models/
-outputs/
+  news_daily.csv
+  sentiment_features.csv
+  csi300_features.csv
 
-module1_news.py
-module2_sentiment.py
-module3_market.py
-module4_features.py
-module5_xgboost.py
-module12_inference.py
-module13_signal_engine.py
-module14_live_monitoring.py
+config/
+  research_config.py
+  asset_registry.json
 
+module1_news.py          GDELT ingestion
+module2_sentiment.py     FinBERT scoring
+module3_market.py        CSI 300 market data
+module4_features.py      trading-session alignment + feature engineering
+module5_xgboost.py       expanding-window direction model + ablation
+module6_garch.py         one-step-ahead volatility forecasts
+module7_backtesting.py   OOS paper-strategy evaluation
+module12_inference.py    latest next-session direction inference
+module13_signal_engine.py paper-signal construction
+
+run_research_pipeline.py
 run_daily_pipeline.py
 app.py
+tests/
 ```
 
----
+## Interpretation
 
-## Known Limitations
+This is a research and paper-trading project, not a broker-connected trading system. A positive result would mean that sentiment features improve out-of-sample forecasting relative to the market-only baseline on the tested sample; it would not by itself establish causality or a durable exploitable anomaly.
 
-- Sentiment extraction currently relies on FinBERT and does not include Chinese-language financial language models.
-- Evaluation is based on a limited out-of-sample paper trading period.
-- This project is intended for research, educational purposes, and paper trading evaluation. It should not be interpreted as investment advice or a production trading system.
-
----
-
-## License
-
-This project is licensed under the MIT License.
+More detail is available in `DATA_CARD.md`, `MODEL_CARD.md`, `ARCHITECTURE.md`, `PIPELINE.md` and `PROJECT_LIMITATIONS.md`.
