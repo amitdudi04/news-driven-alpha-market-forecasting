@@ -61,3 +61,4 @@ data/bigquery_backfill_*/
 data/bigquery_title_test/
 data/news_daily_bigquery_*.csv
 data/bigquery_backfill_*_summary.json
+data/finbert_backfill_*/
