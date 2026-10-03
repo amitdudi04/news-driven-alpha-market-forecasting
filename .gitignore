@@ -25,6 +25,11 @@ Thumbs.db
 # Generated research data
 data/final_dataset.csv
 data/manifests/
+data/raw/
+data/backfill_*/
+data/test_backfill/
+data/news_daily_backfill_*.csv
+data/news_daily_2023_2025.csv
 
 # Generated model artifacts
 models/*.pkl
@@ -51,3 +56,4 @@ archive/
 build/
 dist/
 *.egg-info/
+data/sampled_backfill_*/
