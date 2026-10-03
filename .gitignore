@@ -66,3 +66,6 @@ data/sentiment_features_bigquery_*.csv
 data/finbert_backfill_*_summary.json
 data/one_year_2023_checkpoints/
 data/one_year_2023_progress.jsonl
+data/two_year_2024_2025_checkpoints/
+data/two_year_2024_2025_progress.jsonl
+data/two_year_2024_2025_fast.log
