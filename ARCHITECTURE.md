@@ -1,15 +1,23 @@
 # Architecture
 
-The public project is organized as a research pipeline rather than a production trading system.
+The repository is organized as a research pipeline rather than a live trading system.
 
-```text
-GDELT news
+~~~text
+GDELT title/headline observations
    ↓
-FinBERT daily sentiment
+FinBERT sentiment
+   ↓
+Daily sentiment aggregates
    ↓
 Trading-session alignment
    +
-CSI 300 close-to-close market features
+CSI 300 market features
+   ↓
+Descriptive finance analysis
+   ├─ sentiment / next-session-return association
+   └─ sentiment-sorted return summaries
+   ↓
+Configured OOS reporting gate
    ↓
 Expanding-window XGBoost evaluation
    ├─ market-only baseline
@@ -25,11 +33,20 @@ Next-session volatility forecast
 
 Direction probability + volatility forecast
    ↓
-Paper-trading rule + transaction costs
+Paper-trading rule + turnover costs
    ↓
 Saved research outputs
    ↓
-Streamlit presentation layer
-```
+Read-only Streamlit presentation layer
+~~~
 
-Model fitting and performance evaluation belong in the research pipeline. The dashboard should read saved outputs rather than manufacture historical signals.
+## Separation of roles
+
+- **FinBERT** converts retained GDELT title/headline text into daily sentiment measures.
+- **XGBoost** addresses the directional forecasting question.
+- **GARCH(1,1)** forecasts volatility for risk scaling and does not generate the direction target.
+- **The dashboard** reads saved research outputs; it does not fit models or manufacture historical signals.
+
+## Reporting gate
+
+The expanding-window design uses 60 labelled observations for the initial training window. Model-performance statistics are presented only when at least 30 subsequent genuine OOS forecasts are available. The current committed sample does not meet that threshold, so the public evidence is descriptive rather than model-performance evidence.
