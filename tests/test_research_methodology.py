@@ -98,5 +98,41 @@ class SignalRuleTests(unittest.TestCase):
         self.assertLessEqual(abs(result["position"]), 1.0)
 
 
+class CommittedDataTests(unittest.TestCase):
+    def test_committed_news_sample_contains_no_known_seed_rows(self):
+        news = pd.read_csv("data/news_daily.csv")
+        text = news["raw_text"].astype(str)
+        self.assertFalse(
+            text.str.contains(
+                "China PBOC announces new liquidity measures to stabilize markets on",
+                regex=False,
+            ).any()
+        )
+        self.assertFalse(
+            text.str.contains(
+                "China PBOC economy stock market financial markets regulation",
+                regex=False,
+            ).any()
+        )
+        self.assertGreaterEqual(
+            pd.to_datetime(news["date"]).min(),
+            pd.Timestamp("2026-04-22"),
+        )
+
+    def test_sentiment_counts_match_committed_news_counts(self):
+        news = pd.read_csv("data/news_daily.csv")[["date", "article_count"]]
+        sentiment = pd.read_csv("data/sentiment_features.csv")[["date", "article_count"]]
+        merged = news.merge(
+            sentiment,
+            on="date",
+            how="inner",
+            suffixes=("_news", "_sentiment"),
+        )
+        self.assertGreater(len(merged), 0)
+        self.assertTrue(
+            (merged["article_count_news"] == merged["article_count_sentiment"]).all()
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
