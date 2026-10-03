@@ -1,10 +1,11 @@
-"""Historical GDELT acquisition through the public BigQuery datasets.
+"""Historical China-finance headline acquisition through GDELT BigQuery.
 
-The query reproduces the project's document-level concept as closely as
-possible using Web News NGrams 3.0 for article-content matching and the GDELT
-Article List (GAL) for title/URL metadata.
+The research sample is drawn from the GDELT Article List (GAL). Inclusion is
+based directly on English headline text: a China identifier and at least one
+macro/finance term must both be present. Exact repeated/syndicated headline
+text is removed within each Asia/Shanghai calendar day.
 
-Each research day is queried and checkpointed separately so the 2023-2025
+Each research day is queried and checkpointed separately so the historical
 backfill is resumable and query-cost provenance is retained.
 """
 

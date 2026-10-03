@@ -248,10 +248,25 @@ def main() -> None:
         f"Loading {MODEL_NAME} on {device}; "
         f"days={len(selected)}, batch_size={args.batch_size}"
     )
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    model = AutoModelForSequenceClassification.from_pretrained(
-        MODEL_NAME
-    )
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(
+            MODEL_NAME,
+            local_files_only=True,
+        )
+        model = AutoModelForSequenceClassification.from_pretrained(
+            MODEL_NAME,
+            local_files_only=True,
+        )
+    except OSError:
+        print(
+            "Cached FinBERT files unavailable; falling back to "
+            "Hugging Face download.",
+            flush=True,
+        )
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            MODEL_NAME
+        )
     model.to(device)
     model.eval()
 

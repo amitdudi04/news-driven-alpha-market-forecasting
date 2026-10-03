@@ -64,3 +64,5 @@ data/bigquery_backfill_*_summary.json
 data/finbert_backfill_*/
 data/sentiment_features_bigquery_*.csv
 data/finbert_backfill_*_summary.json
+data/one_year_2023_checkpoints/
+data/one_year_2023_progress.jsonl
