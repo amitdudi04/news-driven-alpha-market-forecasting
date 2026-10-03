@@ -14,7 +14,7 @@ import module7_backtesting
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-MIN_PUBLIC_SAMPLE = 60
+MIN_PUBLIC_SAMPLE = 61
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
     if len(labelled) < MIN_PUBLIC_SAMPLE:
         logging.warning(
             "Feature dataset built, but only %s labelled rows are available. "
-            "At least %s are required before publishing the OOS model comparison "
+            "At least %s are required (60 training rows plus one OOS row) before publishing the OOS model comparison "
             "and GARCH-scaled backtest.",
             len(labelled),
             MIN_PUBLIC_SAMPLE,
