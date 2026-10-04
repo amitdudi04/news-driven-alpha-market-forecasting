@@ -1,6 +1,6 @@
 # Academic Disclosure
 
-This repository presents a student research project on whether timestamp-safe financial-news sentiment adds incremental next-session forecasting information for the CSI 300.
+This repository presents an empirical research project on whether timestamp-safe financial-news sentiment adds incremental next-session forecasting information for the CSI 300.
 
 - The historical research period covers **2023–2026**, with 2022 used only as market/GARCH warm-up.
 - The predictive design was frozen before model fitting: 2023 initial development, 2024 chronological validation, 2025 untouched holdout, and 2026 locked-model robustness.

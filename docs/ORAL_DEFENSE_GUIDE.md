@@ -1,4 +1,4 @@
-# Interview Defense — News-Driven Alpha 2023–2026
+# Oral Defense Guide — News-Driven Alpha 2023–2026
 
 ## 30-second project summary
 
@@ -98,7 +98,7 @@ For XGBoost 2026 balanced accuracy, the point improvement is +5.48 percentage po
 
 Because the interval includes zero, I call the effect **promising but statistically unresolved**.
 
-A useful negative result also appears: in 2024 logistic validation, sentiment significantly worsens Brier and log loss under the same frozen bootstrap rule.
+A useful negative result also appears: in 2024 logistic validation, the sentiment increment is negative for Brier score and log loss, and the frozen 95% block-bootstrap intervals lie below zero for both metrics.
 
 ### 7. GARCH and simulation
 
@@ -122,7 +122,7 @@ For XGBoost + sentiment with GARCH scaling:
 
 So the strategy does not dominate the market. I treat this as a risk-aware simulation, not proof of alpha.
 
-## Likely interview questions
+## Likely oral-defense questions
 
 ### Why did you use a market-only baseline?
 
@@ -164,7 +164,7 @@ Financial time series can have serial dependence. Resampling contiguous 10-sessi
 
 It was frozen before the bootstrap run as a modest two-trading-week dependence window. I did not choose it after observing which interval produced the desired conclusion.
 
-### Did sentiment significantly improve the 2025 holdout?
+### Was the sentiment improvement statistically resolved in the 2025 holdout?
 
 No. All paired 2025 incremental intervals include zero under the frozen block-bootstrap analysis.
 
@@ -216,6 +216,6 @@ No. Here active total return is simply strategy cumulative return minus benchmar
 
 I would test alternative sentiment models/languages only under a new pre-specified experiment, improve publication-time provenance where possible, add formal probability calibration learned only on development data, test more economic volatility models, and evaluate a longer untouched future period.
 
-## Safe final conclusion for interview
+## Concise final conclusion
 
 > My result is not “news predicts the CSI 300.” The result is that timestamp-safe news sentiment sometimes adds incremental information, especially in the 2026 XGBoost robustness period, but the paired uncertainty intervals remain wide and include zero. The project contribution is the auditable timing-safe research design and the disciplined comparison against market-only baselines, not a claim of guaranteed trading alpha.

@@ -1,0 +1,14 @@
+{
+  "release_scope": "2023-2026 timestamp-safe CSI 300 study",
+  "master_dataset_sha256": "ffff88505a3b5a42425d278510952bc9ee735d5a07cfbc58fb57df4f38861d23",
+  "master_sessions": 908,
+  "known_next_session_targets": 907,
+  "strict_model_rows": 867,
+  "headline_observations_aligned": 292373,
+  "headlines_assigned_to_completed_windows": 291973,
+  "session_unique_headlines": 276960,
+  "garch_forecasts": 907,
+  "directional_prediction_rows": 2584,
+  "bootstrap_replications_per_metric": 5000,
+  "raw_historical_data_committed": false
+}
