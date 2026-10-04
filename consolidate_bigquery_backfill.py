@@ -1,8 +1,8 @@
 ﻿"""Consolidate daily BigQuery GDELT headline partitions.
 
-The script builds a candidate daily news dataset without overwriting the
-repository's canonical data/news_daily.csv. Exact syndicated headline repeats
-are removed within each Shanghai calendar day before aggregation.
+The script builds a resumable historical daily-news candidate dataset from
+BigQuery partitions. Exact syndicated headline repeats are removed within each
+Shanghai calendar day before aggregation.
 """
 
 from __future__ import annotations

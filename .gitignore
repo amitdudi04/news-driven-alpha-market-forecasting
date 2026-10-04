@@ -42,6 +42,7 @@ outputs/*
 # Runtime logs
 logs/*
 !logs/.gitkeep
+data/*.log
 
 # Scratch / archive
 scratch/

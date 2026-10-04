@@ -1,33 +1,93 @@
 # Project Limitations
 
-## Short news history
+## 1. News-source selection
 
-The committed GDELT/FinBERT sample begins on 2026-04-22 and contains only 49 news days. Public-API availability and coverage gaps leave the present sample too short for credible machine-learning validation or claims about a persistent forecasting or trading effect.
+The historical news query is English-language and title-based. It captures international English coverage of China-related macroeconomic and financial topics, not the full Chinese-language information set available to domestic investors.
 
-## News measurement
+The query is deliberately transparent but cannot guarantee perfect relevance or recall.
 
-FinBERT is applied to GDELT title/headline text retained by the pipeline rather than full article bodies. The GDELT query is China-focused but is not a complete measure of all information reaching investors. Headline volume is used as a **news-intensity measure**, not as a direct observation of investor attention.
+## 2. Timestamp precision
 
-## End-of-day timing convention
+The alignment uses the **GDELT seen timestamp**. This is the time GDELT observed the item and is not guaranteed to equal the publisher's original publication timestamp.
 
-The saved sentiment data are daily aggregates rather than article-level timestamp panels. Each trading-day feature vector is therefore interpreted as an end-of-day information set used to forecast the next trading session. The project does not claim intraday or pre-open timing precision.
+The project therefore claims **timestamp-safe alignment relative to the observed GDELT timestamp**, not perfect reconstruction of first public dissemination.
 
-## Model evaluation
+## 3. Headline-level sentiment
 
-XGBoost evaluation uses expanding chronological splits. Feature definitions are fixed before the walk-forward evaluation is run and are not selected using future OOS targets. The pipeline does not fit a scaler or perform target-based feature selection on the full sample.
+FinBERT is applied to titles/headlines rather than full article bodies.
 
-The expanding-window design uses a 60-observation initial training window, while public performance statistics require at least 30 subsequent OOS forecasts. That reporting rule is a minimum safeguard, not a statistical-power guarantee or evidence that the resulting sample would establish a durable anomaly.
+The pretrained ProsusAI/FinBERT model was not trained specifically for contemporary Chinese-market news and is not fine-tuned in this project. Sentiment scores can therefore contain domain and language-distribution error.
 
-## Descriptive inference
+## 4. Syndication and duplication
 
-The current correlations and sentiment-sorted returns are descriptive statistics from 31 aligned observations. They are not presented as statistically significant estimates, causal effects, a contrarian anomaly, or proof that sentiment is predictively useful.
+Exact normalized-title duplicates are removed within each assigned market-session information window.
 
-## Risk overlay and backtest
+Semantically identical stories with changed wording can remain. The resulting headline count is therefore a cleaned observation count, not a count of economically independent information events.
 
-GARCH(1,1) is used as a one-step-ahead volatility forecast for position scaling. It is a risk overlay, not evidence that sentiment causes volatility.
+## 5. Missing news
 
-Simulated-strategy calculations convert stored market log returns to simple returns before applying position weights and transaction costs. Sharpe ratios, when reported, use a zero risk-free-rate convention unless otherwise stated.
+Missing sentiment is not filled with zero or neutral sentiment.
 
-## Interpretation
+The one genuine no-news research session remains missing, which propagates through strict rolling sentiment windows. This reduces sample size but avoids conflating missing information with neutral tone.
 
-This is a research prototype with an optional simulated-strategy layer. It does not trade live capital, and descriptive associations or future simulation metrics should not be interpreted as investment advice, causal evidence, or proof of a durable market anomaly.
+## 6. Feature and model scope
+
+The principal directional models are logistic regression and shallow XGBoost.
+
+The feature set was frozen before final holdout evaluation. This reduces post-hoc flexibility, but it does not prove that the specification is economically optimal.
+
+## 7. OOS sample size and uncertainty
+
+The strict modeling sample contains 867 observations:
+
+- 221 target-year 2023 rows;
+- 242 target-year 2024 validation rows;
+- 223 target-year 2025 holdout rows;
+- 181 target-year 2026 robustness rows.
+
+The paired 10-session moving-block bootstrap shows wide uncertainty. Principal 2025/2026 incremental sentiment effects remain unresolved at the 95% level.
+
+A high fraction of positive bootstrap draws is not treated as a classical p-value.
+
+## 8. Probability calibration
+
+Directional probabilities are imperfectly calibrated. Calibration slopes are often below 1.
+
+Probability outputs are therefore interpreted primarily as forecasting/ranking scores rather than literal perfectly calibrated event probabilities.
+
+No post-hoc calibration model is fitted on the 2025 holdout or 2026 robustness periods.
+
+## 9. GARCH specification
+
+The risk overlay uses a simple zero-mean Normal GARCH(1,1).
+
+It provides a transparent one-step volatility forecast but does not exhaust alternative volatility models, distributions, realized-volatility estimators, or structural breaks.
+
+GARCH does not generate directional alpha.
+
+## 10. Transaction-cost simulation
+
+The simulation uses fixed conventions:
+
+- long at p(up) >= 0.55;
+- short at p(up) <= 0.45;
+- otherwise flat;
+- maximum absolute position 1;
+- 10 bps cost per unit turnover.
+
+These values were not optimized on 2025 or 2026 outcomes.
+
+The simulation does not model slippage, market impact, financing, shorting constraints, taxes, execution latency, capacity, or live operational failures.
+
+## 11. Interpretation
+
+The project does not establish:
+
+- causality;
+- statistically resolved sentiment alpha;
+- Jensen alpha;
+- persistent live profitability;
+- economic scalability;
+- transferability to other markets or time periods.
+
+Null and negative evidence is retained as part of the result.
