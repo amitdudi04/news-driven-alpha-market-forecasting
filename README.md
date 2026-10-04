@@ -1,77 +1,113 @@
 # News-Driven Alpha: Financial Sentiment and CSI 300 Forecasting
 
-This project studies whether China-focused financial-news sentiment adds incremental next-session forecasting information for the CSI 300 beyond market-only predictors.
+This repository studies whether China-focused financial-news sentiment adds incremental next-session forecasting information for the CSI 300 beyond market-only predictors.
 
-The research workflow covers historical news collection, FinBERT sentiment scoring, trading-session alignment, CSI 300 market features, logistic-regression and XGBoost benchmarks, out-of-sample evaluation, calibration, block-bootstrap uncertainty, a separate GARCH(1,1) volatility overlay, and a transaction-cost simulation.
+The final research design is a timestamp-safe, multi-year out-of-sample study with paired market-only versus market-plus-sentiment models, calibration diagnostics, paired moving-block-bootstrap uncertainty, a separate GARCH(1,1) volatility overlay, and a fixed-rule transaction-cost simulation.
 
-## Study design
+## Main finding
 
-The modeling sample is organized by the year of the **target trading session**:
+The evidence is mixed rather than uniformly positive.
 
-| Target period | Role | Model-ready rows |
-|---|---|---:|
-| 2023 | initial training | 221 |
-| 2024 | monthly expanding validation | 242 |
-| 2025 | holdout evaluation | 223 |
-| 2026 | temporal robustness | 181 |
+- The strict modeling sample contains **867** fully usable session/target rows.
+- Hyperparameters are selected using **2024 monthly expanding-window validation only**.
+- **2025 (223 targets)** is the untouched holdout.
+- **2026 (181 targets)** is a locked-model temporal robustness period using the same 2023-2024 final fit.
+- In 2025, sentiment improves some metrics but worsens or leaves others unchanged.
+- The strongest point result appears for **XGBoost in 2026**, where balanced accuracy rises from **50.20% to 55.68%** and Brier score improves from **0.25310 to 0.25017**.
+- The paired 10-session moving-block-bootstrap 95% interval for that balanced-accuracy improvement is approximately **[-0.20, +11.83] percentage points**, so the improvement is not statistically resolved at the 95% level.
+- A resolved negative development result is also retained: in 2024 logistic validation, sentiment worsens Brier score and log loss under the frozen bootstrap design.
 
-The final directional models are trained on 2023-2024 after model selection. The same 2023-2024 fit is then evaluated on 2025 and carried forward unchanged for the 2026 robustness period.
+The defensible conclusion is:
 
-## Data
+> Timestamp-safe financial-news sentiment shows model- and period-dependent incremental information, but the current out-of-sample evidence does not establish a stable, statistically resolved predictive advantage.
+
+See [docs/RESULTS.md](docs/RESULTS.md) for the full empirical record.
+
+## Data and timing
 
 ### News
 
 Historical English-language China-finance headlines are collected from GDELT GAL through BigQuery and scored with pretrained ProsusAI/FinBERT.
 
-- 292,373 scored headline observations enter the session-alignment stage.
-- 291,973 observations map to completed CSI 300 trading-session windows.
-- 276,960 normalized session-unique headlines are used for pooled sentiment features.
-- 400 late-Sep/Oct 2026 observations occur after the final completed CSI 300 close in the market file and remain unassigned.
+- **292,373** scored headline observations enter the timestamp-alignment audit.
+- **291,973** observations map to completed CSI 300 trading-session windows.
+- **276,960** normalized session-unique headlines are used for pooled sentiment features.
+- **400** late-Sep/Oct 2026 observations occur after the last completed CSI 300 close in the study and remain unassigned.
 
-Headlines are aligned using Shanghai-local timestamps and the 15:00 CSI 300 market close. After-close, weekend, and holiday news is moved forward to the next eligible trading session.
+GDELT's time field is treated as a **GDELT seen timestamp**, not asserted to be the publisher's exact original publication time.
 
 ### Market
 
-CSI 300 history covers 4 Jan 2022 through 30 Sep 2026.
+CSI 300 market history covers **4 Jan 2022 through 30 Sep 2026**.
 
-- 2022 is used as warm-up for rolling market variables and GARCH history.
-- 1,150 trading sessions are available in total.
-- The research sample contains 908 sessions from 2023 onward.
-- Market history is sourced from the China Securities Index feed through AkShare and cross-checked against Sina history.
+- 2022 is warm-up only.
+- Total trading sessions: **1,150**.
+- Research sessions from 2023 onward: **908**.
+- The historical series is sourced from the China Securities Index feed exposed through AkShare and cross-checked against Sina history.
+- Across 1,150 overlapping sessions, the maximum close discrepancy is **0.005 index points**.
+
+### Timestamp-safe information set
+
+Every forecast is defined at the **15:00 Asia/Shanghai CSI 300 close**.
+
+A headline is assigned to the first market close satisfying:
+
+```text
+previous CSI 300 trading close < GDELT seen timestamp <= current CSI 300 trading close
+```
+
+After-close, weekend, and holiday news therefore moves forward to the next eligible CSI 300 session.
+
+Audit results:
+
+- article/FinBERT unmatched rows: **0**
+- Shanghai-date mismatches: **0**
+- causal-window timing violations: **0**
 
 ## Master session dataset
 
-Each CSI 300 trading-session row contains:
+The master dataset contains **908 CSI 300 sessions** from 3 Jan 2023 through 30 Sep 2026.
+
+Feature groups include:
 
 - current log return;
 - 20-session realized volatility;
-- 5/20 momentum;
-- momentum acceleration;
-- volatility-regime indicator;
+- 5/20 momentum and momentum acceleration;
+- causal volatility-regime indicator;
 - unique headline count;
 - pooled FinBERT sentiment mean and dispersion;
 - positive, negative, and neutral FinBERT shares;
-- complete-window 5/10/20-session rolling sentiment;
-- prior-20-session news intensity;
-- sentiment x volatility interactions;
-- next-session return and direction targets.
+- strict 5/10/20-session rolling sentiment;
+- news intensity relative to the prior 20 sessions;
+- sentiment x volatility interactions.
 
-The no-news research session, 20 Jun 2025, retains missing sentiment rather than being converted to a neutral score.
+Missing sentiment is not neutralized. The one genuine no-news research session, **20 Jun 2025**, remains missing for sentiment features.
 
-The final table contains 908 sessions, 907 known next-session targets, and 867 rows with the full feature set used by the principal models.
+The target is the return sign of the next genuine CSI 300 trading session. Of 908 sessions, **907** have a known next-session target and **867** satisfy the strict full-feature modeling rule.
 
-## Models
+## Frozen experiment
 
-Four directional models are compared:
+Partitioning is based on **target_session_date**, not predictor-row calendar year.
+
+| Target period | Role | Model-ready rows |
+|---|---|---:|
+| 2023 | initial training | 221 |
+| 2024 | 12 monthly expanding validation folds | 242 |
+| 2025 | untouched holdout | 223 |
+| 2026 | locked-model temporal robustness | 181 |
+
+The experiment specification was frozen before fitting.
+
+Principal models:
 
 1. Logistic regression - market only
 2. Logistic regression - market + sentiment
 3. XGBoost - market only
 4. XGBoost - market + sentiment
 
-The central comparison is within model family: the market-plus-sentiment specification is evaluated against the corresponding market-only baseline.
+The research question is the **incremental value of sentiment within the same model family**, not whether a flexible model can predict the market in isolation.
 
-## Out-of-sample results
+## Genuine OOS results
 
 ### 2025 holdout
 
@@ -82,7 +118,7 @@ The central comparison is within model family: the market-plus-sentiment specifi
 | XGBoost market | 0.511 | 0.2624 | 0.7191 | 0.506 |
 | XGBoost + sentiment | 0.508 | 0.2604 | 0.7146 | 0.519 |
 
-The 2025 results are mixed: sentiment improves some classification or probability metrics, but not all of them simultaneously.
+The holdout result is mixed: sentiment improves some classification or probability metrics, but not all of them simultaneously.
 
 ### 2026 temporal robustness
 
@@ -93,67 +129,82 @@ The 2025 results are mixed: sentiment improves some classification or probabilit
 | XGBoost market | 0.502 | 0.2531 | 0.6992 | 0.542 |
 | XGBoost + sentiment | **0.557** | **0.2502** | **0.6935** | **0.546** |
 
-The largest point improvement appears for XGBoost in 2026. Its balanced-accuracy difference is approximately +5.48 percentage points. The paired 10-session moving-block-bootstrap interval is approximately -0.20 to +11.83 percentage points, so the interval includes zero.
+The 2026 XGBoost point estimates are stronger, but the principal paired bootstrap intervals still include zero.
 
 ## Calibration and uncertainty
 
-Calibration is evaluated with intercept, slope, and five-bin expected calibration error. Probability calibration is imperfect, with slopes generally below 1.
+Calibration is evaluated with intercept, slope, and five-bin expected calibration error. Slopes are generally below 1, so the model probabilities should not be interpreted as perfectly calibrated event probabilities.
 
-Incremental model differences are evaluated with a paired circular moving-block bootstrap:
+Incremental sentiment differences use a **paired circular moving-block bootstrap**:
 
 - 5,000 resamples;
 - 10-session blocks;
-- 95% percentile intervals;
-- identical sampled indices for each market-only / market-plus-sentiment pair.
+- paired market-only / market-plus-sentiment rows;
+- 95% percentile intervals.
 
-The 2025 incremental intervals include zero across the principal comparisons. The 2026 XGBoost point estimates are stronger, but their principal intervals also include zero.
+For XGBoost 2026 balanced accuracy:
 
-## GARCH volatility overlay
+```text
+point improvement: +5.48 percentage points
+95% interval: approximately [-0.20, +11.83] percentage points
+```
 
-GARCH(1,1) is estimated separately from the directional models and is used only for position scaling.
+This is suggestive, not statistically resolved.
 
-- 907 one-step volatility forecasts
-- 0 convergence failures
-- expanding return history
-- zero-mean Normal GARCH(1,1)
+## GARCH risk overlay and fixed-rule simulation
 
-The position scale compares the current forecast volatility with the prior forecast-volatility history and is capped at 1.0.
+GARCH(1,1) is estimated separately from the directional models. It forecasts next-session volatility for risk scaling only; it does not determine direction.
 
-## Transaction-cost simulation
+Frozen simulation conventions:
 
-The simulation uses the saved out-of-sample directional probabilities with:
+- p(up) >= 0.55 -> long
+- p(up) <= 0.45 -> short
+- otherwise -> flat
+- maximum absolute position = 1.0
+- transaction cost = 10 bps per unit of turnover
+- GARCH risk scale is capped at 1.0
 
-- long when p(up) >= 0.55;
-- short when p(up) <= 0.45;
-- otherwise flat;
-- maximum absolute position = 1;
-- 10 bps transaction cost per unit of turnover.
+There are **907** one-step GARCH forecasts and **0 convergence failures**.
 
 For XGBoost + sentiment with GARCH scaling:
 
-| Period | Net strategy return | CSI 300 benchmark |
-|---|---:|---:|
-| 2024 validation | +5.54% | +14.68% |
-| 2025 holdout | -7.27% | +11.52% |
-| 2026 robustness | +3.12% | -5.88% |
+| Period | Net strategy return | CSI 300 benchmark | Active-return difference |
+|---|---:|---:|---:|
+| 2024 validation | +5.54% | +14.68% | -9.14% |
+| 2025 holdout | -7.27% | +11.52% | -18.79% |
+| 2026 robustness | +3.12% | -5.88% | +9.00% |
 
-The simulation is reported separately from the directional forecasting metrics.
+"Active-return difference" is only cumulative strategy return minus cumulative benchmark return. It is **not Jensen alpha**.
+
+The simulation is historical research, not evidence of live-capital profitability.
 
 ## Repository structure
 
 ```text
-config/                 experiment and simulation specifications
-docs/                   methodology, data, results, and limitations
-results/                compact empirical result tables
+README.md
+MODEL_CARD.md
+ACADEMIC_DISCLOSURE.md
+SECURITY.md
+requirements.txt
+
+config/                 frozen experiment and simulation specifications
+docs/                   research design, data, results, limitations, reproducibility
+src/data_pipeline/      historical GDELT and FinBERT implementation utilities
+src/utils/              shared helpers
+scripts/                release/repository validation
+results/                compact tracked empirical evidence
 tests/                  methodology tests
+
 build_historical_market.py
 build_session_alignment.py
 build_master_session_dataset.py
 run_directional_experiment.py
 evaluate_oos_uncertainty.py
-run_garch_oos_simulation.py
+evaluate_garch_risk_overlay.py
 app.py
 ```
+
+The visible top-level research scripts correspond to the empirical stages a reviewer may want to inspect. Operational acquisition/scoring utilities are kept under `src/` rather than mixed into the repository root.
 
 ## Reproducibility
 
@@ -163,7 +214,7 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Run the historical research stages:
+The low-level historical news reconstruction utilities are under `src/data_pipeline/`. The main research stages are:
 
 ```bash
 python build_historical_market.py
@@ -171,7 +222,7 @@ python build_session_alignment.py
 python build_master_session_dataset.py
 python run_directional_experiment.py
 python evaluate_oos_uncertainty.py
-python run_garch_oos_simulation.py
+python evaluate_garch_risk_overlay.py
 ```
 
 Launch the dashboard:
@@ -180,29 +231,38 @@ Launch the dashboard:
 python -m streamlit run app.py
 ```
 
-A fresh clone automatically uses the compact tracked files in `results/`
-for the main OOS, uncertainty, GARCH, and simulation tables. If the larger
-local `data/` and `outputs/` artifacts are present, the dashboard also
-enables the full session-history, reliability-bin, and wealth-path views.
-
-Run repository validation:
+Run release validation:
 
 ```bash
 python -m unittest discover -s tests -v
-python validate_repository.py
+python scripts/validate_repository.py
 ```
+
+A fresh clone uses the compact tracked files under `results/` for the principal OOS, calibration, uncertainty, GARCH, and simulation evidence. Large historical datasets, fitted model binaries, bootstrap draws, and full simulation paths remain local/generated.
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md)
+- [Research Scope](docs/RESEARCH_SCOPE.md)
 - [Data Card](docs/DATA_CARD.md)
 - [Data Dictionary](docs/DATA_DICTIONARY.md)
 - [Experiment Design](docs/EXPERIMENT_DESIGN.md)
 - [Results](docs/RESULTS.md)
-- [Model Card](docs/MODEL_CARD.md)
 - [Limitations](docs/LIMITATIONS.md)
 - [Reproducibility](docs/REPRODUCIBILITY.md)
-- [Research Scope](docs/RESEARCH_SCOPE.md)
-- [Academic Disclosure](docs/ACADEMIC_DISCLOSURE.md)
-- [Oral Defense Guide](docs/ORAL_DEFENSE_GUIDE.md)
+- [Interview Defense Guide](docs/INTERVIEW_DEFENSE_2023_2026.md)
+- [Model Card](MODEL_CARD.md)
+- [Academic Disclosure](ACADEMIC_DISCLOSURE.md)
 - [Empirical Result Files](results/README.md)
+
+## Interpretation guardrails
+
+This project does **not** claim:
+
+- a causal effect of news sentiment on CSI 300 returns;
+- statistically resolved sentiment alpha;
+- Jensen alpha;
+- live-trading profitability;
+- persistence outside the studied period;
+- perfectly calibrated directional probabilities.
+
+Null and negative results are retained rather than optimized away.

@@ -1,63 +1,99 @@
-# Reproducibility and Research Pipeline
+# Reproducibility
 
-The canonical workflow is the 2023-2026 historical research pipeline.
+This document describes the cleaned 2023-2026 historical research workflow.
 
-## 1. Historical news acquisition and FinBERT scoring
+Large raw datasets and fitted model binaries are intentionally not tracked. Compact empirical evidence is published under `results/`.
 
-The historical reconstruction uses GDELT GAL in BigQuery with resumable local checkpoints.
+## 1. Environment
 
-Relevant source files:
+Install dependencies:
 
-```text
-bigquery_gdelt_backfill.py
-finbert_backfill.py
-consolidate_bigquery_backfill.py
-consolidate_finbert_backfill.py
-run_fast_one_year_rebuild.py
-run_fast_two_year_rebuild.py
-run_fast_2026_rebuild.py
+```bash
+pip install -r requirements.txt
 ```
 
-The rebuild runners process bounded date ranges and save checkpoints so interrupted collection can resume without restarting the full history.
+The historical news pipeline requires Google BigQuery credentials with access to the public GDELT datasets. Credentials remain local and are not stored in this repository.
 
-BigQuery credentials remain local and are not stored in the repository.
+## 2. Historical news acquisition
 
-## 2. CSI 300 market history
+Operational news-acquisition utilities are kept under `src/data_pipeline/` rather than at repository root.
+
+### Collect GDELT GAL headlines
+
+```bash
+python -m src.data_pipeline.collect_news \
+  --project <GCP_PROJECT> \
+  --start 2023-01-01 \
+  --end 2026-10-03 \
+  --output-dir data/gdelt_headlines
+```
+
+The collector checkpoints each day so an interrupted run can resume without rebuilding completed dates.
+
+### Consolidate the daily headline checkpoints
+
+```bash
+python -m src.data_pipeline.consolidate_news \
+  --start 2023-01-01 \
+  --end 2026-10-03 \
+  --input-dir data/gdelt_headlines \
+  --output data/news_daily_historical.csv \
+  --summary data/gdelt_headlines_summary.json
+```
+
+### Score headlines with FinBERT
+
+```bash
+python -m src.data_pipeline.score_sentiment \
+  --input data/news_daily_historical.csv \
+  --output-dir data/finbert_scores \
+  --start 2023-01-01 \
+  --end 2026-10-03
+```
+
+Use an appropriate batch size for the available CPU/GPU environment.
+
+### Consolidate sentiment checkpoints
+
+```bash
+python -m src.data_pipeline.consolidate_sentiment \
+  --news data/news_daily_historical.csv \
+  --input-dir data/finbert_scores \
+  --output data/sentiment_features_historical.csv \
+  --summary data/finbert_scores_summary.json
+```
+
+## 3. CSI 300 market history
 
 ```bash
 python build_historical_market.py
 ```
 
-This generates CSI 300 market history and features beginning in 2022. The 2022 observations are used as warm-up.
+This generates CSI 300 history and market-only features beginning in 2022. The 2022 observations are warm-up only.
 
-## 3. News-to-session alignment
+## 4. Timestamp-safe news-to-session alignment
 
 ```bash
-python build_session_alignment.py
+python build_session_alignment.py \
+  --article-dir data/gdelt_headlines/daily \
+  --score-dir data/finbert_scores/headline_scores
 ```
 
 Headlines are mapped to CSI 300 sessions using Shanghai-local timestamps and the 15:00 market close. After-close and non-trading-day news is carried forward to the next eligible session.
 
 Processing is month-by-month with compressed checkpoints.
 
-## 4. Master session dataset
+## 5. Master session dataset
 
 ```bash
 python build_master_session_dataset.py
 ```
 
-The master table includes:
+The master table combines market variables, session-unique FinBERT sentiment, rolling sentiment, news intensity, interaction features, and next-session targets.
 
-- market variables;
-- session-unique FinBERT sentiment;
-- rolling sentiment;
-- prior-session news intensity;
-- sentiment-volatility interactions;
-- next-session targets.
+## 6. Directional experiment
 
-## 5. Directional experiment
-
-Experiment definition:
+Frozen specification:
 
 ```text
 config/directional_experiment_2023_2026.json
@@ -69,25 +105,25 @@ Run:
 python run_directional_experiment.py
 ```
 
-The script verifies the SHA-256 of the generated master dataset before fitting. The directional split and candidate grid were fixed before model fitting; the bootstrap settings and simulation conventions were likewise fixed before their respective analyses. The public release history was later consolidated, while the configuration files retain the settings used to generate the reported results.
+The script verifies the master-dataset SHA-256 before fitting.
 
-Design:
+The split is:
 
 - 2023 target sessions: initial training;
-- 2024 target sessions: monthly expanding validation;
-- 2025 target sessions: holdout evaluation;
-- 2026 target sessions: temporal robustness using the same 2023-2024 fitted model.
+- 2024 target sessions: 12 monthly expanding validation folds;
+- 2025 target sessions: untouched holdout;
+- 2026 target sessions: temporal robustness using the same 2023-2024 fit.
 
-Models:
+Principal models:
 
 - logistic market-only;
 - logistic market + sentiment;
 - XGBoost market-only;
 - XGBoost market + sentiment.
 
-## 6. OOS uncertainty and calibration
+## 7. OOS uncertainty and calibration
 
-Configuration:
+Frozen specification:
 
 ```text
 config/oos_uncertainty_spec.json
@@ -99,18 +135,11 @@ Run:
 python evaluate_oos_uncertainty.py
 ```
 
-Outputs include:
+Outputs include calibration diagnostics and the paired 5,000-replication, 10-session moving-block bootstrap.
 
-- calibration intercept and slope;
-- five-bin ECE and reliability tables;
-- paired circular moving-block bootstrap;
-- 5,000 resamples;
-- 10-session blocks;
-- 95% percentile intervals.
+## 8. GARCH risk overlay and transaction simulation
 
-## 7. GARCH risk overlay and transaction simulation
-
-Configuration:
+Frozen specification:
 
 ```text
 config/garch_simulation_spec.json
@@ -119,28 +148,51 @@ config/garch_simulation_spec.json
 Run:
 
 ```bash
-python run_garch_oos_simulation.py
+python evaluate_garch_risk_overlay.py
 ```
 
-GARCH(1,1) forecasts next-session volatility using expanding history and is used for position scaling.
+GARCH(1,1) forecasts next-session volatility using expanding history and is used for position scaling only.
 
-The simulation uses saved out-of-sample directional probabilities.
+The transaction-cost simulation uses saved out-of-sample directional probabilities.
 
-## 8. Dashboard
+## 9. Dashboard
 
 ```bash
 python -m streamlit run app.py
 ```
 
-The dashboard reads generated result files and does not retrain models.
+The dashboard reads generated local artifacts when available and falls back to compact tracked result tables for the principal evidence.
 
-## 9. Validation
+## 10. Validation
 
 ```bash
 python -m unittest discover -s tests -v
-python validate_repository.py
+python scripts/validate_repository.py
 ```
 
 CI runs compile checks, methodology tests, and repository validation.
 
-Large historical datasets, fitted model binaries, bootstrap replication files, and full simulation paths are excluded from Git. Compact empirical result tables are stored under `results/`.
+## Published versus local artifacts
+
+Tracked under `results/`:
+
+- directional OOS metrics;
+- incremental sentiment comparisons;
+- OOS prediction probabilities;
+- selected hyperparameters;
+- calibration metrics;
+- paired block-bootstrap summaries;
+- GARCH forecasts and period diagnostics;
+- simulation metrics;
+- paired simulation comparisons;
+- result manifest.
+
+Kept local/generated:
+
+- full GDELT headline history;
+- per-headline FinBERT checkpoint files;
+- full timestamp-aligned article table;
+- master-session CSV;
+- fitted model binaries;
+- bootstrap replication draws;
+- full simulation paths.

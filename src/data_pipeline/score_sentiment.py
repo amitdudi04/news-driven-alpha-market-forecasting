@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from headline_utils import split_headlines
+from src.utils.headlines import split_headlines
 
 MODEL_NAME = "ProsusAI/finbert"
 
@@ -213,11 +213,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--input",
-        default="data/news_daily_bigquery_2023_2025.csv",
+        default="data/news_daily_historical.csv",
     )
     parser.add_argument(
         "--output-dir",
-        default="data/finbert_backfill_2023_2025",
+        default="data/finbert_scores",
     )
     parser.add_argument("--start", required=True, type=parse_date)
     parser.add_argument("--end", required=True, type=parse_date)

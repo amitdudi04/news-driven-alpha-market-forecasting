@@ -13,19 +13,19 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--news",
-        default="data/news_daily_bigquery_2023_2025.csv",
+        default="data/news_daily_historical.csv",
     )
     parser.add_argument(
         "--input-dir",
-        default="data/finbert_backfill_2023_2025",
+        default="data/finbert_scores",
     )
     parser.add_argument(
         "--output",
-        default="data/sentiment_features_bigquery_2023_2025.csv",
+        default="data/sentiment_features_historical.csv",
     )
     parser.add_argument(
         "--summary",
-        default="data/finbert_backfill_2023_2025_summary.json",
+        default="data/finbert_scores_summary.json",
     )
     args = parser.parse_args()
 

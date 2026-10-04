@@ -167,7 +167,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-dir",
-        default="data/bigquery_backfill_2023_2025",
+        default="data/gdelt_headlines",
     )
     parser.add_argument(
         "--dry-run-day",

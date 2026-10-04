@@ -872,11 +872,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--article-dir",
-        default="data/bigquery_backfill_2023_2025/daily",
+        default="data/gdelt_headlines/daily",
     )
     parser.add_argument(
         "--score-dir",
-        default="data/finbert_backfill_2023_2025/headline_scores",
+        default="data/finbert_scores/headline_scores",
     )
     parser.add_argument(
         "--chunk-dir",
