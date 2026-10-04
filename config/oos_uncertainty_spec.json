@@ -1,0 +1,51 @@
+{
+  "analysis_id": "directional_oos_uncertainty_v1",
+  "source_experiment": "directional_incremental_sentiment_v1",
+  "source_predictions": "outputs/directional_experiment_v1/predictions.csv",
+  "periods": [
+    "2024_validation",
+    "2025_holdout",
+    "2026_robustness"
+  ],
+  "families": [
+    "logistic",
+    "xgboost"
+  ],
+  "paired_variants": [
+    "market_only",
+    "market_plus_sentiment"
+  ],
+  "calibration": {
+    "equal_frequency_bins": 5,
+    "report": [
+      "calibration_intercept",
+      "calibration_slope",
+      "expected_calibration_error"
+    ],
+    "ideal_intercept": 0.0,
+    "ideal_slope": 1.0,
+    "ideal_expected_calibration_error": 0.0
+  },
+  "bootstrap": {
+    "method": "paired circular moving-block bootstrap",
+    "replications": 5000,
+    "block_length_sessions": 10,
+    "random_seed": 2027,
+    "confidence_interval": 0.95,
+    "resample_unit": "ordered OOS trading-session prediction rows",
+    "paired_indices": true
+  },
+  "incremental_metrics": {
+    "balanced_accuracy_improvement": "sentiment - market",
+    "roc_auc_improvement": "sentiment - market",
+    "brier_improvement": "market - sentiment",
+    "log_loss_improvement": "market - sentiment",
+    "calibration_ece_improvement": "market - sentiment"
+  },
+  "interpretation": {
+    "positive_increment": "favors market_plus_sentiment",
+    "negative_increment": "favors market_only",
+    "uncertainty_rule": "If the 95% block-bootstrap interval includes zero, do not describe the incremental effect as statistically resolved.",
+    "bootstrap_probability": "Descriptive bootstrap probability that the incremental metric is greater than zero; not a classical p-value."
+  }
+}
