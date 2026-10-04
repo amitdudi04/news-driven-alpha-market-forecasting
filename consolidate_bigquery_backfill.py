@@ -1,4 +1,4 @@
-﻿"""Consolidate daily BigQuery GDELT headline partitions.
+"""Consolidate daily BigQuery GDELT headline partitions.
 
 The script builds a resumable historical daily-news candidate dataset from
 BigQuery partitions. Exact syndicated headline repeats are removed within each

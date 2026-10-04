@@ -189,14 +189,16 @@ Simulation settings:
 
 ### XGBoost with GARCH scaling
 
-| Period | Model | Net return | Benchmark | Net Sharpe | Max drawdown |
-|---|---|---:|---:|---:|---:|
-| 2024 | market only | +0.52% | +14.68% | 0.11 | -10.25% |
-| 2024 | + sentiment | **+5.54%** | +14.68% | **0.49** | -11.02% |
-| 2025 | market only | -10.71% | +11.52% | -0.94 | -19.77% |
-| 2025 | + sentiment | **-7.27%** | +11.52% | **-0.57** | **-17.98%** |
-| 2026 | market only | -0.45% | -5.88% | 0.02 | **-8.25%** |
-| 2026 | + sentiment | **+3.12%** | -5.88% | **0.40** | -10.85% |
+| Period | Model | Net return | Benchmark | Active-return difference | Net Sharpe | Max drawdown |
+|---|---|---:|---:|---:|---:|---:|
+| 2024 | market only | +0.52% | +14.68% | -14.16% | 0.11 | -10.25% |
+| 2024 | + sentiment | **+5.54%** | +14.68% | **-9.14%** | **0.49** | -11.02% |
+| 2025 | market only | -10.71% | +11.52% | -22.23% | -0.94 | -19.77% |
+| 2025 | + sentiment | **-7.27%** | +11.52% | **-18.79%** | **-0.57** | **-17.98%** |
+| 2026 | market only | -0.45% | -5.88% | +5.43% | 0.02 | **-8.25%** |
+| 2026 | + sentiment | **+3.12%** | -5.88% | **+9.00%** | **0.40** | -10.85% |
+
+Active-return difference is the strategy's cumulative net return minus the benchmark's cumulative return; it is not Jensen alpha.
 
 The GARCH scale generally reduces exposure during higher-volatility periods. Return effects vary across periods.
 
