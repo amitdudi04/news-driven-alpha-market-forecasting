@@ -1,0 +1,32 @@
+{
+  "logistic_market_only": {
+    "id": "logit_c_0.1",
+    "C": 0.1
+  },
+  "logistic_market_plus_sentiment": {
+    "id": "logit_c_0.1",
+    "C": 0.1
+  },
+  "xgboost_market_only": {
+    "id": "xgb_a",
+    "n_estimators": 150,
+    "max_depth": 2,
+    "learning_rate": 0.03,
+    "min_child_weight": 5,
+    "subsample": 0.9,
+    "colsample_bytree": 0.9,
+    "reg_lambda": 5.0,
+    "reg_alpha": 0.0
+  },
+  "xgboost_market_plus_sentiment": {
+    "id": "xgb_a",
+    "n_estimators": 150,
+    "max_depth": 2,
+    "learning_rate": 0.03,
+    "min_child_weight": 5,
+    "subsample": 0.9,
+    "colsample_bytree": 0.9,
+    "reg_lambda": 5.0,
+    "reg_alpha": 0.0
+  }
+}

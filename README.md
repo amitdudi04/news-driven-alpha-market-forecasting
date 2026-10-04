@@ -21,7 +21,7 @@ The defensible conclusion is therefore:
 
 > Timestamp-safe financial-news sentiment shows **period- and model-dependent incremental forecasting information**, but the current OOS evidence does not establish a stable, statistically resolved predictive advantage.
 
-Full results are in [docs/RESULTS.md](docs/RESULTS.md).
+Full results are in [docs/RESULTS.md](docs/RESULTS.md). The complete research-documentation map is in [docs/README.md](docs/README.md), and the committed empirical snapshot is in [results/README.md](results/README.md).
 
 ## Data construction
 
@@ -169,6 +169,23 @@ For XGBoost + sentiment with GARCH scaling:
 
 “Active return” here is only the difference in cumulative total return. It is **not Jensen alpha**.
 
+## Documentation
+
+The research documentation is organized under [docs/](docs/README.md):
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Data Card](docs/DATA_CARD.md)
+- [Data Dictionary](docs/DATA_DICTIONARY.md)
+- [Experiment Design](docs/EXPERIMENT_DESIGN.md)
+- [Results](docs/RESULTS.md)
+- [Model Card](docs/MODEL_CARD.md)
+- [Limitations](docs/LIMITATIONS.md)
+- [Reproducibility](docs/REPRODUCIBILITY.md)
+- [Academic Disclosure](docs/ACADEMIC_DISCLOSURE.md)
+- [Oral Defense Guide](docs/ORAL_DEFENSE_GUIDE.md)
+
+A compact, auditable snapshot of the reported empirical outputs is committed under [results/](results/README.md).
+
 ## Reproducibility
 
 Install dependencies:
@@ -204,27 +221,34 @@ python -m streamlit run app.py
 
 ## Core outputs
 
+Large generated research artifacts remain local and are excluded from Git:
+
 ```text
 data/master_session_dataset_2023_2026.csv
 data/master_session_dataset_2023_2026_summary.json
 
 outputs/directional_experiment_v1/
-  metrics.csv
-  predictions.csv
-  incremental_sentiment_comparison.csv
-  selected_hyperparameters_from_2024.json
-  uncertainty/
-    oos_calibration_metrics.csv
-    paired_block_bootstrap_summary.csv
-
 outputs/garch_simulation_v1/
+```
+
+The small empirical artifacts needed to inspect the reported findings are committed under:
+
+```text
+results/
+  directional_oos_metrics.csv
+  incremental_sentiment_comparison.csv
+  oos_predictions.csv
+  calibration_metrics.csv
+  block_bootstrap_summary.csv
   garch_forecasts.csv
   garch_forecast_metrics.csv
   simulation_metrics.csv
-  paired_sentiment_simulation_comparison.csv
+  paired_simulation_comparison.csv
+  selected_hyperparameters.json
+  release_manifest.json
 ```
 
-Generated historical data and result files are excluded from version control so stale local artifacts are not mistaken for source code.
+This separation keeps generated historical data and fitted models out of version control while preserving a reviewable snapshot of the actual OOS evidence.
 
 ## Interpretation guardrails
 
@@ -239,4 +263,4 @@ This project does **not** claim:
 
 A null or negative sentiment result is retained rather than optimized away.
 
-For interview-ready project defense, see [docs/INTERVIEW_DEFENSE_2023_2026.md](docs/INTERVIEW_DEFENSE_2023_2026.md).
+For a concise technical oral-defense reference, see [docs/ORAL_DEFENSE_GUIDE.md](docs/ORAL_DEFENSE_GUIDE.md).

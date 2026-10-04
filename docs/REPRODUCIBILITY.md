@@ -1,10 +1,10 @@
-# Pipeline
+# Reproducibility and Research Pipeline
 
 The canonical pipeline is the **2023–2026 timestamp-safe historical workflow**. The earlier short-sample prototype pipeline has been removed.
 
 ## 1. Historical news acquisition and FinBERT scoring
 
-The historical build uses GDELT GAL in BigQuery plus resumable local checkpoints.
+The historical reconstruction uses GDELT GAL in BigQuery plus resumable local checkpoints. The reconstruction utilities are operational support code; the inferential design begins only after the timestamp-safe session dataset is created.
 
 Relevant source files:
 
@@ -18,7 +18,7 @@ run_fast_two_year_rebuild.py
 run_fast_2026_rebuild.py
 ~~~
 
-The fast runners were designed to process bounded weekly ranges and save durable checkpoints so failures do not require restarting the entire history.
+The dated rebuild runners process bounded weekly ranges and save durable checkpoints so a network or provider interruption does not require restarting the entire history. They do not alter the frozen experiment design or model-selection rules.
 
 The physical checkpoint directories retain the original `*_2023_2025` baseline name because the 2026 extension was deliberately appended to that already-validated store. Final consolidated outputs use `2023_2026` names. The directory label is therefore historical provenance, not a claim that 2026 data are absent.
 

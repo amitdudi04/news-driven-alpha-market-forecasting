@@ -55,12 +55,7 @@ def validate_static_structure() -> None:
 
     required = {
         "README.md",
-        "DATA_CARD.md",
-        "MODEL_CARD.md",
-        "PIPELINE.md",
-        "ARCHITECTURE.md",
-        "PROJECT_LIMITATIONS.md",
-        "ACADEMIC_DISCLOSURE.md",
+        "SECURITY.md",
         "app.py",
         "headline_utils.py",
         "bigquery_gdelt_backfill.py",
@@ -75,8 +70,29 @@ def validate_static_structure() -> None:
         "config/oos_uncertainty_spec.json",
         "config/garch_simulation_spec.json",
         "tests/test_research_methodology.py",
+        "docs/README.md",
+        "docs/ARCHITECTURE.md",
+        "docs/DATA_CARD.md",
+        "docs/DATA_DICTIONARY.md",
+        "docs/EXPERIMENT_DESIGN.md",
         "docs/RESULTS.md",
-        "docs/INTERVIEW_DEFENSE_2023_2026.md",
+        "docs/MODEL_CARD.md",
+        "docs/LIMITATIONS.md",
+        "docs/REPRODUCIBILITY.md",
+        "docs/ACADEMIC_DISCLOSURE.md",
+        "docs/ORAL_DEFENSE_GUIDE.md",
+        "results/README.md",
+        "results/release_manifest.json",
+        "results/directional_oos_metrics.csv",
+        "results/incremental_sentiment_comparison.csv",
+        "results/oos_predictions.csv",
+        "results/selected_hyperparameters.json",
+        "results/calibration_metrics.csv",
+        "results/block_bootstrap_summary.csv",
+        "results/garch_forecasts.csv",
+        "results/garch_forecast_metrics.csv",
+        "results/simulation_metrics.csv",
+        "results/paired_simulation_comparison.csv",
     }
     missing = sorted(required - tracked)
     if missing:
@@ -102,24 +118,61 @@ def validate_static_structure() -> None:
         "data/news_daily.csv",
         "data/sentiment_features.csv",
         "data/csi300_features.csv",
+        "ACADEMIC_DISCLOSURE.md",
+        "ARCHITECTURE.md",
+        "DATA_CARD.md",
+        "MODEL_CARD.md",
+        "PIPELINE.md",
+        "PROJECT_LIMITATIONS.md",
+        "docs/INTERVIEW_DEFENSE_2023_2026.md",
     }
     still_tracked = sorted(obsolete & tracked)
     if still_tracked:
         fail(
-            "Obsolete short-sample prototype still tracked: "
+            "Obsolete or superseded public files still tracked: "
             f"{still_tracked}"
+        )
+
+    generated_tracked = sorted(
+        path
+        for path in tracked
+        if (
+            path.startswith("data/")
+            and path != "data/.gitkeep"
+        )
+        or (
+            path.startswith("outputs/")
+            and path != "outputs/.gitkeep"
+        )
+        or (
+            path.startswith("models/")
+            and path != "models/.gitkeep"
+        )
+        or (
+            path.startswith("logs/")
+            and path != "logs/.gitkeep"
+        )
+    )
+    if generated_tracked:
+        fail(
+            "Generated data/model/result artifacts must not be tracked: "
+            f"{generated_tracked}"
         )
 
     public_docs = [
         "README.md",
-        "DATA_CARD.md",
-        "MODEL_CARD.md",
-        "PIPELINE.md",
-        "ARCHITECTURE.md",
-        "PROJECT_LIMITATIONS.md",
-        "ACADEMIC_DISCLOSURE.md",
+        "docs/README.md",
+        "docs/ARCHITECTURE.md",
+        "docs/DATA_CARD.md",
+        "docs/DATA_DICTIONARY.md",
+        "docs/EXPERIMENT_DESIGN.md",
         "docs/RESULTS.md",
-        "docs/INTERVIEW_DEFENSE_2023_2026.md",
+        "docs/MODEL_CARD.md",
+        "docs/LIMITATIONS.md",
+        "docs/REPRODUCIBILITY.md",
+        "docs/ACADEMIC_DISCLOSURE.md",
+        "docs/ORAL_DEFENSE_GUIDE.md",
+        "results/README.md",
     ]
     forbidden_phrases = [
         "49 news days",
@@ -130,6 +183,8 @@ def validate_static_structure() -> None:
         "run_research_pipeline.py",
         "data/news_daily.csv",
         "data/csi300_features.csv",
+        "significantly worsens",
+        "interview-ready project defense",
     ]
     for relative in public_docs:
         text = (
@@ -245,6 +300,141 @@ def validate_specs() -> None:
         fail("Transaction-cost convention changed.")
     if bool(cost["optimized"]):
         fail("Transaction-cost convention must remain non-optimized.")
+
+
+def validate_committed_results_snapshot() -> None:
+    direction = load_json(
+        "config/directional_experiment_2023_2026.json"
+    )
+    manifest = load_json("results/release_manifest.json")
+
+    if (
+        manifest.get("master_dataset_sha256")
+        != direction["master_dataset_sha256"]
+    ):
+        fail(
+            "Committed result manifest does not match the frozen "
+            "master-dataset SHA-256."
+        )
+
+    expected_manifest = {
+        "master_sessions": 908,
+        "known_next_session_targets": 907,
+        "strict_model_rows": 867,
+        "headline_observations_aligned": 292373,
+        "headlines_assigned_to_completed_windows": 291973,
+        "session_unique_headlines": 276960,
+        "garch_forecasts": 907,
+        "directional_prediction_rows": 2584,
+        "bootstrap_replications_per_metric": 5000,
+    }
+    for key, expected in expected_manifest.items():
+        if int(manifest.get(key, -1)) != expected:
+            fail(
+                f"Unexpected committed result manifest value for "
+                f"{key}: {manifest.get(key)!r}"
+            )
+
+    metrics = pd.read_csv(
+        ROOT / "results/directional_oos_metrics.csv"
+    )
+    if len(metrics) != 12:
+        fail("Committed directional metrics should contain 12 rows.")
+
+    predictions = pd.read_csv(
+        ROOT / "results/oos_predictions.csv"
+    )
+    if len(predictions) != 2584:
+        fail("Committed OOS predictions should contain 2,584 rows.")
+    if predictions.duplicated(
+        ["model_name", "period", "target_session_date"]
+    ).any():
+        fail("Duplicate committed OOS prediction rows detected.")
+
+    expected_period_counts = {
+        "2024_validation": 242,
+        "2025_holdout": 223,
+        "2026_robustness": 181,
+    }
+    grouped = predictions.groupby(
+        ["model_name", "period"]
+    ).size()
+    if len(grouped) != 12:
+        fail(
+            "Committed OOS predictions should contain "
+            "four models across three periods."
+        )
+    for (_, period), count in grouped.items():
+        if int(count) != expected_period_counts[period]:
+            fail(
+                f"Unexpected committed prediction count for "
+                f"{period}: {count}"
+            )
+
+    calibration = pd.read_csv(
+        ROOT / "results/calibration_metrics.csv"
+    )
+    if len(calibration) != 12:
+        fail("Committed calibration metrics should contain 12 rows.")
+
+    bootstrap = pd.read_csv(
+        ROOT / "results/block_bootstrap_summary.csv"
+    )
+    if len(bootstrap) != 30:
+        fail("Committed bootstrap summary should contain 30 rows.")
+    if not (
+        bootstrap["valid_bootstrap_draws"].astype(int) == 5000
+    ).all():
+        fail(
+            "A committed bootstrap metric has fewer than "
+            "5,000 valid draws."
+        )
+
+    selected = load_json("results/selected_hyperparameters.json")
+    expected_models = {
+        "logistic_market_only",
+        "logistic_market_plus_sentiment",
+        "xgboost_market_only",
+        "xgboost_market_plus_sentiment",
+    }
+    if set(selected) != expected_models:
+        fail(
+            "Committed selected-hyperparameter keys do not match "
+            "the four principal models."
+        )
+
+    garch_forecasts = pd.read_csv(
+        ROOT / "results/garch_forecasts.csv"
+    )
+    if len(garch_forecasts) != 907:
+        fail("Committed GARCH forecasts should contain 907 rows.")
+    if garch_forecasts["date"].duplicated().any():
+        fail("Duplicate dates in committed GARCH forecasts.")
+    if int(
+        (garch_forecasts["convergence_flag"] != 0).sum()
+    ) != 0:
+        fail("Committed GARCH forecasts contain convergence failures.")
+
+    garch_metrics = pd.read_csv(
+        ROOT / "results/garch_forecast_metrics.csv"
+    )
+    if len(garch_metrics) != 3:
+        fail("Committed GARCH period metrics should contain 3 rows.")
+
+    simulation = pd.read_csv(
+        ROOT / "results/simulation_metrics.csv"
+    )
+    if len(simulation) != 24:
+        fail("Committed simulation metrics should contain 24 rows.")
+
+    paired_simulation = pd.read_csv(
+        ROOT / "results/paired_simulation_comparison.csv"
+    )
+    if len(paired_simulation) != 12:
+        fail(
+            "Committed paired simulation comparison should "
+            "contain 12 rows."
+        )
 
 
 def validate_local_artifacts_if_present() -> None:
@@ -368,6 +558,7 @@ def validate_local_artifacts_if_present() -> None:
 def main() -> None:
     validate_static_structure()
     validate_specs()
+    validate_committed_results_snapshot()
     validate_local_artifacts_if_present()
     print(
         "Repository validation passed: current pipeline, frozen "
