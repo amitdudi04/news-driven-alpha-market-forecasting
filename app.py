@@ -27,6 +27,14 @@ def load_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_csv_first(paths, parse_dates=None):
+    for path in paths:
+        frame = load_csv(path, parse_dates=parse_dates)
+        if frame is not None:
+            return frame
+    return None
+
+
 def pct(value, digits=2):
     if value is None or pd.isna(value):
         return "—"
@@ -39,6 +47,7 @@ def num(value, digits=3):
     return f"{float(value):.{digits}f}"
 
 
+release_manifest = load_json("results/results_manifest.json")
 alignment = load_json("data/timestamp_alignment_2023_2026_summary.json")
 master_summary = load_json(
     "data/master_session_dataset_2023_2026_summary.json"
@@ -48,36 +57,59 @@ master = load_csv(
     parse_dates=["date", "target_session_date"],
 )
 
-metrics = load_csv(
-    "outputs/directional_experiment_v1/metrics.csv"
+metrics = load_csv_first(
+    [
+        "outputs/directional_experiment_v1/metrics.csv",
+        "results/directional_oos_metrics.csv",
+    ]
 )
-incremental = load_csv(
-    "outputs/directional_experiment_v1/"
-    "incremental_sentiment_comparison.csv"
+incremental = load_csv_first(
+    [
+        "outputs/directional_experiment_v1/"
+        "incremental_sentiment_comparison.csv",
+        "results/incremental_sentiment_comparison.csv",
+    ]
 )
-predictions = load_csv(
-    "outputs/directional_experiment_v1/predictions.csv",
+predictions = load_csv_first(
+    [
+        "outputs/directional_experiment_v1/predictions.csv",
+        "results/oos_predictions.csv",
+    ],
     parse_dates=["date", "target_session_date"],
 )
-bootstrap = load_csv(
-    "outputs/directional_experiment_v1/uncertainty/"
-    "paired_block_bootstrap_summary.csv"
+bootstrap = load_csv_first(
+    [
+        "outputs/directional_experiment_v1/uncertainty/"
+        "paired_block_bootstrap_summary.csv",
+        "results/block_bootstrap_summary.csv",
+    ]
 )
-calibration = load_csv(
-    "outputs/directional_experiment_v1/uncertainty/"
-    "oos_calibration_metrics.csv"
+calibration = load_csv_first(
+    [
+        "outputs/directional_experiment_v1/uncertainty/"
+        "oos_calibration_metrics.csv",
+        "results/calibration_metrics.csv",
+    ]
 )
+# Reliability bins are intentionally kept as a larger local diagnostic.
 reliability = load_csv(
     "outputs/directional_experiment_v1/uncertainty/"
     "oos_reliability_bins.csv"
 )
 
-garch_metrics = load_csv(
-    "outputs/garch_simulation_v1/garch_forecast_metrics.csv"
+garch_metrics = load_csv_first(
+    [
+        "outputs/garch_simulation_v1/garch_forecast_metrics.csv",
+        "results/garch_forecast_metrics.csv",
+    ]
 )
-simulation_metrics = load_csv(
-    "outputs/garch_simulation_v1/simulation_metrics.csv"
+simulation_metrics = load_csv_first(
+    [
+        "outputs/garch_simulation_v1/simulation_metrics.csv",
+        "results/simulation_metrics.csv",
+    ]
 )
+# Full simulation paths are intentionally local-only.
 simulation_paths = load_csv(
     "outputs/garch_simulation_v1/simulation_paths.csv.gz",
     parse_dates=["date", "target_session_date_pred"],
@@ -99,8 +131,8 @@ st.sidebar.markdown(
 **GARCH:** risk overlay only"""
 )
 st.sidebar.caption(
-    "Generated data/results are local artifacts and are excluded "
-    "from version control."
+    "Compact empirical results are tracked under results/. "
+    "Larger data, diagnostics, and fitted artifacts remain local."
 )
 
 tabs = st.tabs(
@@ -124,35 +156,59 @@ with tabs[0]:
     )
 
     if alignment and master_summary:
+        headline_observations = alignment["input_headlines_joined"]
+        assigned_headlines = alignment["assigned_headlines_total"]
+        unique_headlines = master_summary[
+            "session_unique_normalized_headlines"
+        ]
+        master_sessions = master_summary["master_session_rows"]
+        strict_rows = master_summary["strict_model_ready_rows"]
+        timing_label = str(alignment["monthly_timing_violations"])
+    elif release_manifest:
+        headline_observations = release_manifest[
+            "headline_observations_aligned"
+        ]
+        assigned_headlines = release_manifest[
+            "headlines_assigned_to_completed_windows"
+        ]
+        unique_headlines = release_manifest[
+            "session_unique_headlines"
+        ]
+        master_sessions = release_manifest["master_sessions"]
+        strict_rows = release_manifest["strict_model_rows"]
+        timing_label = str(
+            release_manifest["timestamp_alignment_timing_violations"]
+        )
+    else:
+        headline_observations = None
+
+    if headline_observations is not None:
         cols = st.columns(4)
         cols[0].metric(
             "Headline observations",
-            f"{alignment['input_headlines_joined']:,}",
+            f"{headline_observations:,}",
         )
         cols[1].metric(
             "Assigned to market windows",
-            f"{alignment['assigned_headlines_total']:,}",
+            f"{assigned_headlines:,}",
         )
         cols[2].metric(
             "Session-unique headlines",
-            f"{master_summary['session_unique_normalized_headlines']:,}",
+            f"{unique_headlines:,}",
         )
         cols[3].metric(
             "CSI 300 master sessions",
-            f"{master_summary['master_session_rows']:,}",
+            f"{master_sessions:,}",
         )
 
         cols = st.columns(4)
         cols[0].metric(
             "Strict model-ready rows",
-            f"{master_summary['strict_model_ready_rows']:,}",
+            f"{strict_rows:,}",
         )
         cols[1].metric("2025 holdout", "223")
         cols[2].metric("2026 robustness", "181")
-        cols[3].metric(
-            "Timing violations",
-            str(alignment["monthly_timing_violations"]),
-        )
+        cols[3].metric("Timing violations", timing_label)
 
     st.markdown(
         """
@@ -224,7 +280,7 @@ with tabs[1]:
             xaxis_title="Trading session",
             yaxis_title="Unique headlines",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         fig = go.Figure()
         fig.add_trace(
@@ -248,7 +304,7 @@ with tabs[1]:
             xaxis_title="Trading session",
             yaxis_title="FinBERT score",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         fig = go.Figure()
         fig.add_trace(
@@ -264,7 +320,7 @@ with tabs[1]:
             xaxis_title="Trading session",
             yaxis_title="Daily volatility",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         no_news = master[
             master["unique_headline_count_t"] == 0
@@ -282,7 +338,7 @@ with tabs[1]:
                         "sentiment_roll_20",
                     ]
                 ],
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
 
@@ -310,7 +366,7 @@ with tabs[2]:
         ].copy()
         st.dataframe(
             display,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -369,13 +425,13 @@ with tabs[2]:
             xaxis_title="Target trading session",
             yaxis_title="Probability of positive next-session return",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         if incremental is not None:
             st.subheader("Incremental sentiment differences")
             st.dataframe(
                 incremental,
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
 
@@ -419,7 +475,7 @@ with tabs[3]:
                     "resolution_95pct",
                 ]
             ],
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -452,7 +508,7 @@ with tabs[3]:
             ),
             yaxis_title="Metric",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     st.subheader("Calibration")
     if calibration is not None:
@@ -468,7 +524,7 @@ with tabs[3]:
                     "expected_calibration_error",
                 ]
             ],
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -523,7 +579,7 @@ with tabs[3]:
             xaxis_range=[0, 1],
             yaxis_range=[0, 1],
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 
 with tabs[4]:
@@ -537,7 +593,7 @@ with tabs[4]:
     else:
         st.dataframe(
             garch_metrics,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
         st.caption(
@@ -637,7 +693,7 @@ with tabs[4]:
                 xaxis_title="Feature date",
                 yaxis_title="Wealth, base 1.0",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         st.caption(
             "Simulation conventions are fixed: p>=0.55 long, p<=0.45 "

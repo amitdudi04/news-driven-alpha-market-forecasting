@@ -7,6 +7,7 @@
   "headline_observations_aligned": 292373,
   "headlines_assigned_to_completed_windows": 291973,
   "session_unique_headlines": 276960,
+  "timestamp_alignment_timing_violations": 0,
   "garch_forecasts": 907,
   "directional_prediction_rows": 2584,
   "bootstrap_replications_per_metric": 5000,

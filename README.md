@@ -180,6 +180,11 @@ Launch the dashboard:
 python -m streamlit run app.py
 ```
 
+A fresh clone automatically uses the compact tracked files in `results/`
+for the main OOS, uncertainty, GARCH, and simulation tables. If the larger
+local `data/` and `outputs/` artifacts are present, the dashboard also
+enables the full session-history, reliability-bin, and wealth-path views.
+
 Run repository validation:
 
 ```bash

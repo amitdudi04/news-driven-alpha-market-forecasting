@@ -6,7 +6,7 @@ This directory contains compact result files from the 2023-2026 historical study
 
 | File | Contents |
 |---|---|
-| `results_manifest.json` | Dataset/result counts and master-dataset SHA-256. |
+| `results_manifest.json` | Dataset/result counts, timing-audit status, and master-dataset SHA-256. |
 | `directional_oos_metrics.csv` | Directional metrics for all four models across 2024 validation, 2025 holdout, and 2026 robustness. |
 | `incremental_sentiment_comparison.csv` | Within-family market-plus-sentiment versus market-only differences. |
 | `oos_predictions.csv` | Saved out-of-sample probabilities and targets. |
