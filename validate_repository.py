@@ -61,7 +61,7 @@ def validate_static_structure() -> None:
         "bigquery_gdelt_backfill.py",
         "finbert_backfill.py",
         "build_historical_market.py",
-        "build_timestamp_safe_alignment.py",
+        "build_session_alignment.py",
         "build_master_session_dataset.py",
         "run_directional_experiment.py",
         "evaluate_oos_uncertainty.py",
@@ -79,10 +79,10 @@ def validate_static_structure() -> None:
         "docs/MODEL_CARD.md",
         "docs/LIMITATIONS.md",
         "docs/REPRODUCIBILITY.md",
-        "docs/ACADEMIC_DISCLOSURE.md",
+        "docs/RESEARCH_SCOPE.md",
         "docs/ORAL_DEFENSE_GUIDE.md",
         "results/README.md",
-        "results/release_manifest.json",
+        "results/results_manifest.json",
         "results/directional_oos_metrics.csv",
         "results/incremental_sentiment_comparison.csv",
         "results/oos_predictions.csv",
@@ -170,7 +170,7 @@ def validate_static_structure() -> None:
         "docs/MODEL_CARD.md",
         "docs/LIMITATIONS.md",
         "docs/REPRODUCIBILITY.md",
-        "docs/ACADEMIC_DISCLOSURE.md",
+        "docs/RESEARCH_SCOPE.md",
         "docs/ORAL_DEFENSE_GUIDE.md",
         "results/README.md",
     ]
@@ -306,7 +306,7 @@ def validate_committed_results_snapshot() -> None:
     direction = load_json(
         "config/directional_experiment_2023_2026.json"
     )
-    manifest = load_json("results/release_manifest.json")
+    manifest = load_json("results/results_manifest.json")
 
     if (
         manifest.get("master_dataset_sha256")

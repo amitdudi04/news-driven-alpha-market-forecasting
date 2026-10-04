@@ -32,8 +32,8 @@ data/news_daily_backfill_*.csv
 data/news_daily_2023_2025.csv
 
 # Generated model artifacts
-models/*.pkl
-models/*_metadata.json
+models/*
+!models/.gitkeep
 
 # Generated outputs
 outputs/*

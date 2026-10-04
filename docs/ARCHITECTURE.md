@@ -1,102 +1,86 @@
 # Architecture
 
-The repository is an auditable historical research workflow, not a live trading system.
+The project is organized as a historical research pipeline with separate data, forecasting, uncertainty, volatility, and presentation layers.
 
-~~~text
+```text
 GDELT GAL / BigQuery
         ↓
-headline-level China-finance filter
+China-finance headline filter
         ↓
-session-safe de-duplication + FinBERT
+FinBERT headline scoring
         ↓
-GDELT seen timestamps
+Shanghai-local trading-session alignment
         ↓
-15:00 Asia/Shanghai trading-close alignment
-        │
-        ├──────────────┐
-        ↓              ↓
-session sentiment   CSI 300 history (2022 warm-up)
-        │              ↓
-        └──────→ market/session features
-                       ↓
-              next-session targets
-                       ↓
-              master session dataset
-                       ↓
-        frozen target-date experiment
-              /                 \
-      logistic regression      XGBoost
-       market / +sentiment   market / +sentiment
-              \                 /
-                genuine OOS probabilities
-                         ↓
-        calibration + paired block bootstrap
+session-level headline de-duplication and pooling
+        ↓
+CSI 300 market/session features
+        ↓
+next-session targets
+        ↓
+master session dataset
+        ↓
+chronological directional experiment
+     /                             \
+logistic regression             XGBoost
+market / +sentiment         market / +sentiment
+     \                             /
+       out-of-sample probabilities
+                 ↓
+      calibration + block bootstrap
 
 CSI 300 returns ──→ expanding GARCH(1,1)
                          ↓
                  volatility risk scale
 
-frozen OOS direction probability + GARCH risk scale
+out-of-sample direction probability + risk scale
                          ↓
-            fixed-rule costed simulation
+              transaction-cost simulation
                          ↓
-                 saved local outputs
-                         ↓
-               read-only dashboard
-~~~
+                  dashboard and result tables
+```
 
-## Separation of roles
+## Component roles
 
 ### FinBERT
 
-FinBERT maps individual retained headlines to sentiment probabilities/scores.
+FinBERT maps retained headlines to sentiment probabilities and a scalar sentiment score. It is a feature-generation model, not the final directional forecasting model.
 
-It is not the forecasting model.
+### Session alignment
 
-### Market/session builder
+News is mapped to CSI 300 trading sessions using Shanghai-local timestamps and the 15:00 market close. After-close, weekend, and holiday news is carried forward to the next eligible session.
 
-The master builder creates causal trading-session features and genuine next-session targets.
+### Master dataset
 
-It preserves missing sentiment and uses prior-only definitions for news-intensity baselines.
+The master dataset combines market variables, pooled sentiment, rolling sentiment, news intensity, interaction features, and next-session targets.
 
-### Logistic regression and XGBoost
+### Directional models
 
-These are the principal directional forecasting models.
+Logistic regression and XGBoost are estimated in paired market-only and market-plus-sentiment specifications.
 
-Each has a market-only and market+sentiment specification so incremental sentiment value can be measured within model family.
+### Uncertainty analysis
 
-### Uncertainty layer
-
-The paired moving-block bootstrap is applied only to saved OOS predictions.
-
-It does not refit or retune the directional models.
+Calibration diagnostics and paired moving-block bootstrap intervals are computed from saved out-of-sample predictions.
 
 ### GARCH
 
-GARCH(1,1) forecasts one-step-ahead volatility for position scaling.
-
-It is intentionally separate from the directional alpha question.
+GARCH(1,1) provides one-step volatility forecasts used for position scaling. It does not generate direction probabilities.
 
 ### Simulation
 
-The simulation applies fixed probability thresholds, risk scaling, turnover, and transaction costs to genuine OOS predictions.
-
-It is descriptive historical research, not a broker execution engine.
+The simulation applies fixed probability thresholds, GARCH scaling, turnover, and transaction costs to saved out-of-sample probabilities.
 
 ### Dashboard
 
-The Streamlit dashboard reads saved local result artifacts.
+The Streamlit dashboard reads generated result files and does not retrain models.
 
-It is a presentation layer, not a training path.
+## Experiment configuration
 
-## Frozen research controls
+The final experiment is defined by:
 
-Three committed specifications control the final experiment:
-
-~~~text
+```text
 config/directional_experiment_2023_2026.json
 config/oos_uncertainty_spec.json
 config/garch_simulation_spec.json
-~~~
+```
 
-This separates design decisions from later empirical outcomes.
+These files contain the chronological split, model candidate grids, bootstrap settings, and simulation conventions.

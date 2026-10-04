@@ -650,7 +650,7 @@ with tabs[5]:
     st.subheader("Reproducible workflow")
     st.code(
         """python build_historical_market.py
-python build_timestamp_safe_alignment.py
+python build_session_alignment.py
 python build_master_session_dataset.py
 python run_directional_experiment.py
 python evaluate_oos_uncertainty.py

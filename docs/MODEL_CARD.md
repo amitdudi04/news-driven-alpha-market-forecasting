@@ -1,34 +1,27 @@
-# Model Card — Directional Forecasting and GARCH Risk Overlay
+# Model Card — CSI 300 Directional Forecasting
 
-## Intended use
+## Scope
 
-This repository is a **research prototype** for testing whether timestamp-safe China-focused financial-news sentiment adds incremental next-session forecasting information for the CSI 300.
-
-It is not a broker-connected trading system and is not intended for live-capital deployment.
+The project compares market-only and market-plus-sentiment models for next-session CSI 300 direction forecasting.
 
 ## Dataset
 
-- Research market sessions: **908**
-- Strict model-ready rows: **867**
-- Modeling target: next genuine CSI 300 trading-session return sign
-- Timestamp cutoff: **15:00 Asia/Shanghai**
-- News timestamp semantics: GDELT seen timestamp
-- Session-unique normalized headlines used for pooled sentiment: **276,960**
+- Research sessions: 908
+- Model-ready rows: 867
+- Target: next CSI 300 trading-session return sign
+- Market close used for session alignment: 15:00 Asia/Shanghai
+- Session-unique normalized headlines: 276,960
 
-Missing news remains missing. The one no-news session, 20 Jun 2025, is not imputed to neutral sentiment.
+The one no-news session, 20 Jun 2025, retains missing sentiment.
 
-## Frozen split
-
-Partitioning is based on **target_session_date**.
+## Chronological split
 
 | Target year | Role | Rows |
 |---|---|---:|
 | 2023 | initial training | 221 |
 | 2024 | monthly expanding validation | 242 |
-| 2025 | untouched holdout | 223 |
-| 2026 | locked-model robustness | 181 |
-
-The split and candidate grids were committed before fitting.
+| 2025 | holdout evaluation | 223 |
+| 2026 | temporal robustness | 181 |
 
 ## Model families
 
@@ -39,9 +32,9 @@ Two variants:
 - market only;
 - market + sentiment.
 
-Training-window-only standardization is performed with `StandardScaler`.
+Standardization is fitted within each training window.
 
-Selected C for both variants: **0.1**.
+Selected C for both variants: 0.1.
 
 ### XGBoost
 
@@ -50,7 +43,7 @@ Two variants:
 - market only;
 - market + sentiment.
 
-Selected 2024-validation specification for both variants:
+Selected specification:
 
 - 150 trees;
 - depth 2;
@@ -61,123 +54,110 @@ Selected 2024-validation specification for both variants:
 - L2 regularization 5;
 - L1 regularization 0.
 
-## Feature groups
+## Features
 
-Market-only:
+### Market-only
 
 - current log return;
 - 20-session volatility;
 - 5/20 momentum;
 - momentum acceleration;
-- causal volatility-regime indicator.
+- volatility-regime indicator.
 
-Sentiment additions:
+### Sentiment additions
 
 - unique headline count;
 - pooled FinBERT sentiment mean;
 - sentiment dispersion;
-- 5/10/20-session strict rolling sentiment;
+- 5/10/20-session rolling sentiment;
 - prior-20-session news intensity;
-- current and rolling sentiment × volatility interactions.
+- sentiment × volatility interactions.
 
 ## Evaluation
 
-Primary metrics:
+Metrics include:
 
 - balanced accuracy;
+- accuracy;
 - Brier score;
 - log loss;
 - ROC AUC;
 - calibration intercept;
 - calibration slope;
-- 5-bin expected calibration error.
+- five-bin expected calibration error.
 
-Incremental value is always measured **within model family**.
+Incremental sentiment effects are measured within model family.
 
-### 2025 holdout
+## 2025 holdout
 
-Sentiment evidence is mixed:
+Results are mixed:
 
-- logistic: threshold classification improves, probability loss slightly worsens;
-- XGBoost: Brier/log loss/AUC improve, balanced accuracy slightly worsens.
+- logistic sentiment improves balanced accuracy but slightly worsens Brier score and log loss;
+- XGBoost sentiment improves Brier score, log loss, and ROC AUC while slightly reducing balanced accuracy.
 
-### 2026 robustness
+## 2026 temporal robustness
 
-The strongest point result is XGBoost + sentiment:
+The 2026 evaluation uses the same 2023–2024 fitted models.
 
-- balanced accuracy: **0.5568**
-- Brier: **0.2502**
-- ROC AUC: **0.5458**
+XGBoost + sentiment:
 
-Paired balanced-accuracy improvement versus market-only is **+0.0548**, but its 95% paired block-bootstrap interval is approximately **[-0.0020, +0.1183]**.
+- balanced accuracy: 0.5568
+- Brier score: 0.2502
+- log loss: 0.6935
+- ROC AUC: 0.5458
 
-Therefore the improvement is **not statistically resolved at 95%**.
+The balanced-accuracy difference versus market-only is +0.0548. Its paired 95% moving-block-bootstrap interval is approximately [-0.0020, +0.1183].
 
-## Calibration limitations
+## Calibration
 
-Calibration is imperfect. Slopes are generally below 1, indicating that probability magnitudes should not be interpreted as perfectly calibrated event probabilities.
+Calibration slopes are generally below 1.
 
-The best observed 2026 calibration among the principal XGBoost variants is the sentiment model:
+For XGBoost + sentiment in 2026:
 
 - intercept ≈ 0.074;
 - slope ≈ 0.556;
-- 5-bin ECE ≈ 0.0485.
+- five-bin ECE ≈ 0.0485.
 
-This remains meaningfully different from ideal calibration (0, 1, 0).
+## Bootstrap uncertainty
 
-## Uncertainty
+The paired moving-block bootstrap uses:
 
-The frozen uncertainty design uses:
-
-- paired circular moving-block bootstrap;
 - 10-session blocks;
 - 5,000 resamples;
 - 95% percentile intervals;
-- identical sampled row indices for each market-only / sentiment pair.
-
-If an interval includes zero, the incremental effect is described as unresolved.
-
-A null or negative sentiment result is retained.
+- identical sampled row indices for each model pair.
 
 ## GARCH risk model
 
-GARCH(1,1) is completely separate from the directional fit.
+GARCH(1,1) is separate from the directional models.
 
-- zero-mean return model;
+- zero-mean return specification;
 - Normal innovations;
 - expanding one-step forecasts;
 - 907 forecasts;
 - 0 convergence failures.
 
-GARCH does not create direction probabilities. It only scales fixed directional positions.
+GARCH is used for position scaling.
 
-## Simulation conventions
+## Simulation settings
 
-- p(up) >= 0.55: long
-- p(up) <= 0.45: short
+- p(up) ≥ 0.55: long
+- p(up) ≤ 0.45: short
 - otherwise flat
-- max |position| = 1
+- max absolute position = 1
 - 10 bps cost per unit turnover
-- risk-free rate = 0 for reported Sharpe
-- each period starts flat
+- zero risk-free rate for reported Sharpe
 
-These values are **fixed research conventions**, not optimized trading parameters.
+## Limitations
 
-## Key limitations
+- The news sample is English-language and title-based.
+- GDELT seen time may differ from original publisher publication time.
+- FinBERT is not trained specifically for Chinese-market English news.
+- Session-level title de-duplication does not remove all semantic duplication.
+- Principal 2025 and 2026 bootstrap intervals for incremental sentiment effects include zero.
+- Probability calibration is imperfect.
+- The simulation omits several live-execution frictions, including market impact and financing.
 
-1. GDELT seen time is not guaranteed to equal publisher-original publication time.
-2. The news query is English-language and therefore samples international coverage of China rather than the full Chinese-language information set.
-3. FinBERT is not China-specific and is not fine-tuned here.
-4. Exact normalized-title de-duplication does not eliminate all semantically duplicated syndication.
-5. Directional effects are not statistically resolved in the 2025 holdout or 2026 robustness period under the frozen block-bootstrap test.
-6. Calibration is weak.
-7. Fixed-rule simulation does not establish live profitability, persistence, scalability, causality, or Jensen alpha.
+## Reproducibility
 
-## Reproducibility controls
-
-- frozen dataset SHA-256 is stored in the directional experiment specification;
-- experiment design was committed before fitting;
-- holdout predictions are generated only after 2024 model selection;
-- 2026 uses the same 2023–2024 fit without 2025 retraining;
-- all saved prediction rows are paired exactly between market-only and sentiment variants;
-- 13 repository methodology tests pass.
+The directional experiment records the master-dataset SHA-256, split, feature sets, candidate grids, and evaluation settings in `config/directional_experiment_2023_2026.json`.
