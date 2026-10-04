@@ -1,10 +1,10 @@
 """Build validated CSI 300 market history for the historical experiment.
 
-Primary source: AkShare Eastmoney CSI 300 index history (sh000300).
+Primary source: AkShare China Securities Index Company CSI 300 history (000300).
 Cross-check source: AkShare Sina CSI 300 index history (sh000300).
 
-2022 is warm-up only. The research sample begins in 2023. Outputs are kept
-separate from the repository's original short-sample market file.
+2022 is warm-up only. The research sample begins in 2023. Historical outputs
+are written to dedicated market-history files.
 """
 
 from __future__ import annotations

@@ -2,51 +2,49 @@
 
 ## Research question
 
-The empirical question is:
+The empirical question is whether China-focused financial-news sentiment adds incremental next-session forecasting information for the CSI 300 beyond market-only predictors.
 
-> Does timestamp-safe China-focused financial-news sentiment add incremental next-session forecasting information for the CSI 300 beyond market-only predictors?
-
-The comparison is therefore paired **within model family**. A market-plus-sentiment model is evaluated against the corresponding market-only model, rather than against an unrelated benchmark.
+Each market-plus-sentiment model is compared with the corresponding market-only model from the same model family.
 
 ## Unit of observation
 
-The forecasting unit is one genuine CSI 300 trading session.
+The forecasting unit is one CSI 300 trading session.
 
-For a feature row dated `t`:
+For each session:
 
-- all news information is restricted to the timestamp-safe information window ending at the 15:00 Asia/Shanghai close on session `t`;
-- the target is the log return of the **next genuine CSI 300 trading session**;
-- direction equals 1 when that next-session log return is positive and 0 otherwise.
+- market and news features are measured using information available by the Shanghai close;
+- the target is the return of the next CSI 300 trading session;
+- direction equals 1 when the next-session log return is positive and 0 otherwise.
 
-The final master dataset contains 908 sessions, 907 known next-session targets, and 867 rows satisfying the strict complete-feature modeling rule.
+The final master dataset contains 908 sessions, 907 known next-session targets, and 867 rows with the complete feature set used by the principal models.
 
-## Frozen chronological split
+## Chronological split
 
-Partitioning uses **target_session_date**, not the predictor-row calendar year. This prevents year-end feature rows from crossing the intended train/holdout boundary when their return target belongs to the next calendar year.
+Partitioning is based on `target_session_date`, not the predictor-row calendar year.
 
-| Target year | Role | Strict rows |
+| Target year | Role | Model-ready rows |
 |---|---|---:|
-| 2023 | initial development training | 221 |
-| 2024 | chronological model-selection validation | 242 |
-| 2025 | untouched final holdout | 223 |
-| 2026 | locked-model post-sample robustness | 181 |
+| 2023 | initial training | 221 |
+| 2024 | chronological validation | 242 |
+| 2025 | holdout evaluation | 223 |
+| 2026 | temporal robustness | 181 |
 
-The exact split and candidate grids are stored in `config/directional_experiment_2023_2026.json`.
+The exact split and candidate grids are stored in `config/directional_experiment_2023_2026.json`. These settings were fixed before the four-model fit; the later public release history was consolidated after the analysis.
 
 ## 2024 validation procedure
 
-The 2024 validation period is divided into 12 monthly expanding-window folds.
+The 2024 period is divided into 12 monthly expanding-window folds.
 
-For each validation month:
+For each month:
 
-1. training uses only eligible rows with earlier `target_session_date`;
-2. the scaler, where applicable, is fitted on that training window only;
-3. the candidate model produces probabilities for the held-out month;
-4. candidate selection uses aggregate 2024 OOS predictions.
+1. training uses only rows with earlier target-session dates;
+2. model preprocessing is fitted on the training portion only;
+3. candidate models produce probabilities for the held-out month;
+4. candidate selection is based on the combined 2024 out-of-sample predictions.
 
-The primary selection metric is Brier score. Lower log loss and then candidate identifier are deterministic tie-breakers.
+The primary selection metric is Brier score. Log loss and candidate identifier are deterministic tie-breakers.
 
-The 2025 holdout is not used in model selection.
+The 2025 holdout is excluded from model selection.
 
 ## Feature groups
 
@@ -58,7 +56,7 @@ The 2025 holdout is not used in model selection.
 - `momentum_acceleration_t`
 - `regime_dummy_t`
 
-### Incremental sentiment predictors
+### Sentiment additions
 
 - `unique_headline_count_t`
 - `sentiment_mean_t`
@@ -71,22 +69,20 @@ The 2025 holdout is not used in model selection.
 - `sentiment_roll_5_x_volatility`
 - `sentiment_roll_20_x_volatility`
 
-The sentiment feature set is evaluated only as an addition to the same market feature base.
-
-## Principal model families
+## Model families
 
 ### Logistic regression
 
 - L2 penalty
 - `lbfgs` solver
-- training-window-only standardization
-- frozen candidate values for `C`: 0.1, 1, 10
+- training-window standardization
+- candidate C values: 0.1, 1, 10
 
-Both market-only and market-plus-sentiment variants selected `C = 0.1` using 2024 validation.
+Both variants select C = 0.1 using the 2024 validation period.
 
 ### XGBoost
 
-The frozen candidate grid is intentionally shallow and regularized. Both variants selected the same 2024-validation configuration:
+The candidate grid uses shallow, regularized trees. Both variants select:
 
 - 150 trees
 - maximum depth 2
@@ -97,20 +93,18 @@ The frozen candidate grid is intentionally shallow and regularized. Both variant
 - L2 regularization 5
 - L1 regularization 0
 
-Using the same selected complexity in both variants makes the incremental sentiment comparison easier to interpret.
+## Final fit and temporal robustness
 
-## Final fit and post-sample rule
+After candidate selection, each model is fitted once on all eligible 2023–2024 observations.
 
-After candidate selection, each selected model is fitted once on all eligible 2023–2024 targets.
+- 2025 is used for holdout evaluation.
+- 2026 uses the same 2023–2024 fitted model without retraining on 2025.
 
-- 2025 is evaluated as the untouched final holdout.
-- 2026 uses the **same 2023–2024 fitted model**. The model is not retrained on 2025 before the robustness evaluation.
-
-This makes 2026 a locked-model temporal robustness check rather than an adaptive rolling retraining exercise.
+This provides a separate temporal robustness check.
 
 ## Evaluation metrics
 
-Directional OOS performance is reported with:
+Directional performance is reported with:
 
 - balanced accuracy;
 - accuracy;
@@ -120,51 +114,33 @@ Directional OOS performance is reported with:
 - mean predicted up probability;
 - observed up rate.
 
-Calibration is assessed separately using:
+Calibration is summarized using:
 
 - calibration intercept;
 - calibration slope;
 - five-bin expected calibration error;
 - reliability-bin tables.
 
-## Incremental uncertainty
+## Bootstrap uncertainty
 
-The uncertainty design is frozen in `config/oos_uncertainty_spec.json`.
-
-For each model family and OOS period, market-only and market-plus-sentiment predictions are resampled with identical indices using a paired circular moving-block bootstrap:
+Incremental model differences are evaluated with a paired circular moving-block bootstrap:
 
 - 5,000 replications;
 - 10-session blocks;
-- 95% percentile intervals.
+- 95% percentile intervals;
+- identical sampled indices for each market-only / market-plus-sentiment pair.
 
-Positive increments are defined to favor sentiment. If the 95% interval includes zero, the incremental effect is described as **unresolved under the frozen block-bootstrap analysis**.
+Positive increments favor the sentiment specification. Intervals that include zero are reported as such.
 
-The bootstrap probability that an increment is positive is descriptive and is not reported as a classical p-value.
+## GARCH and simulation
 
-## GARCH and simulation separation
-
-The directional experiment is completed before the volatility overlay is applied.
+The GARCH volatility model is estimated separately from the directional models.
 
 GARCH(1,1):
 
+- uses expanding historical returns;
 - forecasts one-step-ahead volatility;
-- uses expanding historical returns only;
-- does not produce the directional probability;
-- only scales the absolute position size.
+- scales position size only;
+- does not generate direction probabilities.
 
-The transaction-cost simulation uses the already-saved OOS directional probabilities under fixed, non-optimized conventions defined in `config/garch_simulation_spec.json`.
-
-This separation prevents risk scaling or trading-rule results from changing the directional model-selection process.
-
-## Interpretation rule
-
-A positive point estimate alone is not sufficient for a claim of persistent predictive advantage.
-
-The project distinguishes:
-
-1. directional point performance;
-2. probability quality and calibration;
-3. paired uncertainty;
-4. descriptive fixed-rule simulation.
-
-No causal, Jensen-alpha, or live-trading claim is inferred from the directional experiment.
+The transaction-cost simulation uses the saved out-of-sample probabilities with the settings defined in `config/garch_simulation_spec.json`.

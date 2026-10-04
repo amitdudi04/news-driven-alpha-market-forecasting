@@ -12,7 +12,7 @@ Optimizations:
 - no repeated Python subprocess startup/model reload per week;
 - weekly durable checkpoints.
 
-The canonical public short-sample files are never overwritten.
+Historical reconstruction outputs are written to dedicated checkpoint files.
 """
 
 from __future__ import annotations

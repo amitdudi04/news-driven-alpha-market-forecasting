@@ -10,5 +10,5 @@
   "garch_forecasts": 907,
   "directional_prediction_rows": 2584,
   "bootstrap_replications_per_metric": 5000,
-  "raw_historical_data_committed": false
+  "raw_historical_data_included": false
 }

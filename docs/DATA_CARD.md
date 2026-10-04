@@ -2,81 +2,70 @@
 
 ## Research scope
 
-The project studies the CSI 300 and China-focused financial/economic news.
+The project combines CSI 300 market data with English-language China-focused financial and economic news.
 
 ### Historical periods
 
-- **Market warm-up:** 4 Jan 2022 onward
-- **Research/news period:** 1 Jan 2023 – 3 Oct 2026
-- **Last completed CSI 300 market close in the study:** 30 Sep 2026
+- Market warm-up: 4 Jan 2022 onward
+- Research/news period: 1 Jan 2023 – 3 Oct 2026
+- Last completed CSI 300 market close in the study: 30 Sep 2026
 
-2022 is used only to initialize rolling market features and GARCH history.
+2022 is used only for rolling market features and GARCH warm-up.
 
 ## News source
 
-Historical headlines are retrieved from the **GDELT 2.0 Global Article List (GAL)** in BigQuery.
+Historical headlines are retrieved from the GDELT 2.0 Global Article List (GAL) in BigQuery.
 
 The query:
 
 - restricts language to English;
-- requires a China identifier in the title (for example China, Chinese, PBOC, Beijing);
-- requires at least one macro/finance term;
-- retains title/headline text rather than full article bodies.
+- requires a China identifier in the title;
+- requires at least one macroeconomic or financial term;
+- retains headline text rather than full article bodies.
 
-The query therefore samples **English-language international coverage of China-related finance/economics**. It is not a complete archive of all information available to Chinese-market investors.
+The resulting sample represents English-language international coverage of China-related finance and economics.
 
-## Timestamp semantics
+## Timestamp handling
 
-The GDELT timestamp is treated as a **GDELT seen timestamp**.
+The available GDELT time field is treated as the GDELT seen timestamp.
 
-It is not claimed to be the publisher's exact original publication time.
+Headlines are mapped to CSI 300 trading sessions using Shanghai-local time and the 15:00 market close. News observed after the close, on weekends, or during market holidays is carried forward to the next eligible trading session.
 
-Forecast cutoff:
+Alignment summary:
 
-**15:00 Asia/Shanghai on genuine CSI 300 trading days**
+| Item | Count |
+|---|---:|
+| Headline observations entering alignment | 292,373 |
+| Assigned to completed CSI 300 sessions | 291,973 |
+| Remaining after the final completed market close | 400 |
 
-Headline assignment rule:
-
-~~~text
-previous CSI 300 trading close < GDELT seen timestamp <= current CSI 300 trading close
-~~~
-
-After-close, weekend, and holiday news is moved forward to the first eligible market close.
-
-Final audit:
-
-- headline observations entering alignment: **292,373**
-- assigned to completed CSI 300 windows: **291,973**
-- pending after the last known market close: **400**
-- causal-window timing violations: **0**
+All assigned headline observations have corresponding FinBERT records and a completed-session assignment.
 
 ## Sentiment
 
-Headlines are scored with pretrained **ProsusAI/FinBERT**.
+Headlines are scored with pretrained ProsusAI/FinBERT.
 
-FinBERT is not fine-tuned for China-specific news in this project.
+Before session-level pooling, normalized titles are de-duplicated within each assigned trading-session window.
 
-Before session-level pooling, normalized titles are de-duplicated within each assigned trading-session information window.
-
-- assigned observations: **291,973**
-- session-unique normalized headlines: **276,960**
-- repeated observations removed: **15,013**
+| Item | Count |
+|---|---:|
+| Assigned headline observations | 291,973 |
+| Session-unique normalized headlines | 276,960 |
+| Repeated observations removed | 15,013 |
 
 ## Market data
 
-The CSI 300 historical series is built from the China Securities Index feed exposed through AkShare and independently checked against Sina history.
+The CSI 300 historical series is built from the China Securities Index feed exposed through AkShare and cross-checked against Sina history.
 
-- total market sessions: **1,150**
-- 2022 warm-up sessions: **242**
-- research sessions from 2023: **908**
-- independent-source overlapping sessions: **1,150**
-- maximum close difference: **0.005 index points**
-
-The project does not use Yahoo Finance as the authoritative historical source because the tested Yahoo endpoint returned an incomplete CSI 300 history during reconstruction.
+- total market sessions: 1,150
+- 2022 warm-up sessions: 242
+- research sessions from 2023: 908
+- cross-source overlapping sessions: 1,150
+- maximum close difference: 0.005 index points
 
 ## Master session dataset
 
-The master dataset contains **908 genuine CSI 300 sessions**.
+The master dataset contains 908 CSI 300 trading sessions.
 
 Features include:
 
@@ -84,34 +73,28 @@ Features include:
 - 20-session realized volatility;
 - 5/20 momentum;
 - momentum acceleration;
-- causal volatility-regime indicator;
+- volatility-regime indicator;
 - unique headline count;
 - pooled FinBERT sentiment mean and dispersion;
-- positive/negative/neutral FinBERT shares;
-- strict 5/10/20-session rolling sentiment;
-- current news intensity relative to the prior 20 sessions;
+- positive, negative, and neutral FinBERT shares;
+- complete-window 5/10/20-session rolling sentiment;
+- news intensity relative to the prior 20 sessions;
 - sentiment-volatility interactions.
 
-Missing sentiment remains missing. The one genuine no-news research session is **20 Jun 2025**.
+The no-news research session is 20 Jun 2025. Sentiment remains missing for that session.
 
-Targets:
+Targets are defined from the next CSI 300 trading session:
 
-- next genuine CSI 300 trading-session log return;
-- next-session direction = 1 if that return is positive, otherwise 0.
+- next-session log return;
+- next-session direction = 1 for a positive return, otherwise 0.
 
-There are **907** known next-session targets and **867** rows satisfying the strict full-feature modeling rule.
+There are 907 known next-session targets and 867 rows with the full feature set used by the principal models.
 
-## Version-control policy
+## Data limitations
 
-Large generated historical datasets and model outputs are intentionally excluded from Git.
-
-Source code, frozen specifications, documentation, tests, and small configuration files are committed. This prevents large/stale generated artifacts from being mistaken for source-of-truth code.
-
-## Limitations
-
-- English-only news selection creates coverage bias.
-- GDELT seen time is not exact publisher publication time.
-- Title filtering may miss relevant stories or include imperfectly relevant ones.
-- Exact normalized-title de-duplication does not eliminate all semantic syndication.
-- FinBERT is not China-specific.
-- The last completed market close precedes some late-Sep/Oct 2026 news, so 400 observations remain correctly unassigned.
+- English-only news selection does not represent the full Chinese-language information set.
+- GDELT seen time may differ from the publisher's original publication time.
+- Title-based filtering may miss some relevant stories or include imperfectly relevant items.
+- Normalized-title de-duplication does not remove all semantic syndication.
+- FinBERT is not specifically trained for Chinese-market English news.
+- 400 late-Sep/Oct 2026 headline observations occur after the final completed market close in the study.

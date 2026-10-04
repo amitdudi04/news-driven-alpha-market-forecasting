@@ -8,7 +8,7 @@ Optimizations over the original orchestrator:
 - no repeated Python subprocess startup/model reload per week;
 - weekly durable checkpoints remain unchanged in spirit.
 
-The canonical public short-sample files are never overwritten.
+Historical reconstruction outputs are written to dedicated checkpoint files.
 """
 
 from __future__ import annotations

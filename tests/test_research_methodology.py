@@ -14,7 +14,7 @@ from build_master_session_dataset import (
     build_master,
     normalize_title,
 )
-from build_timestamp_safe_alignment import month_ranges
+from build_session_alignment import month_ranges
 from evaluate_oos_uncertainty import (
     circular_block_indices,
     delta_metrics,

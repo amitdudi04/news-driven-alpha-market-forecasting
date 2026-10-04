@@ -1,14 +1,14 @@
 # Reproducibility and Research Pipeline
 
-The canonical pipeline is the **2023–2026 timestamp-safe historical workflow**. The earlier short-sample prototype pipeline has been removed.
+The canonical workflow is the 2023-2026 historical research pipeline.
 
 ## 1. Historical news acquisition and FinBERT scoring
 
-The historical reconstruction uses GDELT GAL in BigQuery plus resumable local checkpoints. The reconstruction utilities are operational support code; the inferential design begins only after the timestamp-safe session dataset is created.
+The historical reconstruction uses GDELT GAL in BigQuery with resumable local checkpoints.
 
 Relevant source files:
 
-~~~text
+```text
 bigquery_gdelt_backfill.py
 finbert_backfill.py
 consolidate_bigquery_backfill.py
@@ -16,77 +16,67 @@ consolidate_finbert_backfill.py
 run_fast_one_year_rebuild.py
 run_fast_two_year_rebuild.py
 run_fast_2026_rebuild.py
-~~~
+```
 
-The dated rebuild runners process bounded weekly ranges and save durable checkpoints so a network or provider interruption does not require restarting the entire history. They do not alter the frozen experiment design or model-selection rules.
+The rebuild runners process bounded date ranges and save checkpoints so interrupted collection can resume without restarting the full history.
 
-The physical checkpoint directories retain the original `*_2023_2025` baseline name because the 2026 extension was deliberately appended to that already-validated store. Final consolidated outputs use `2023_2026` names. The directory label is therefore historical provenance, not a claim that 2026 data are absent.
-
-BigQuery credentials are local environment/application credentials and are never committed.
+BigQuery credentials remain local and are not stored in the repository.
 
 ## 2. CSI 300 market history
 
-~~~bash
+```bash
 python build_historical_market.py
-~~~
+```
 
-Creates locally generated market history/features beginning in 2022.
+This generates CSI 300 market history and features beginning in 2022. The 2022 observations are used as warm-up.
 
-2022 is warm-up only.
+## 3. News-to-session alignment
 
-## 3. Timestamp-safe news alignment
+```bash
+python build_session_alignment.py
+```
 
-~~~bash
-python build_timestamp_safe_alignment.py
-~~~
-
-The cutoff is 15:00 Asia/Shanghai.
-
-Each headline is assigned to:
-
-~~~text
-(previous genuine CSI 300 close, current genuine CSI 300 close]
-~~~
+Headlines are mapped to CSI 300 sessions using Shanghai-local timestamps and the 15:00 market close. After-close and non-trading-day news is carried forward to the next eligible session.
 
 Processing is month-by-month with compressed checkpoints.
 
 ## 4. Master session dataset
 
-~~~bash
+```bash
 python build_master_session_dataset.py
-~~~
+```
 
-Builds one row per CSI 300 session with:
+The master table includes:
 
-- market state;
+- market variables;
 - session-unique FinBERT sentiment;
-- strict rolling sentiment;
-- prior-only news intensity;
+- rolling sentiment;
+- prior-session news intensity;
 - sentiment-volatility interactions;
-- genuine next-session targets.
+- next-session targets.
 
-## 5. Frozen directional experiment
+## 5. Directional experiment
 
 Experiment definition:
 
-~~~text
+```text
 config/directional_experiment_2023_2026.json
-~~~
+```
 
 Run:
 
-~~~bash
+```bash
 python run_directional_experiment.py
-~~~
+```
 
-The script verifies the SHA-256 of the locally generated master dataset before fitting.
+The script verifies the SHA-256 of the generated master dataset before fitting. The directional split and candidate grid were fixed before model fitting; the bootstrap settings and simulation conventions were likewise fixed before their respective analyses. The public release history was later consolidated, while the configuration files retain the settings used to generate the reported results.
 
 Design:
 
-- target-year 2023: initial development;
-- target-year 2024: monthly expanding validation;
-- target-year 2025: untouched holdout;
-- target-year 2026: locked-model robustness.
+- 2023 target sessions: initial training;
+- 2024 target sessions: monthly expanding validation;
+- 2025 target sessions: holdout evaluation;
+- 2026 target sessions: temporal robustness using the same 2023-2024 fitted model.
 
 Models:
 
@@ -97,22 +87,22 @@ Models:
 
 ## 6. OOS uncertainty and calibration
 
-Frozen definition:
+Configuration:
 
-~~~text
+```text
 config/oos_uncertainty_spec.json
-~~~
+```
 
 Run:
 
-~~~bash
+```bash
 python evaluate_oos_uncertainty.py
-~~~
+```
 
-Reports:
+Outputs include:
 
-- calibration intercept/slope;
-- 5-bin ECE/reliability tables;
+- calibration intercept and slope;
+- five-bin ECE and reliability tables;
 - paired circular moving-block bootstrap;
 - 5,000 resamples;
 - 10-session blocks;
@@ -120,37 +110,37 @@ Reports:
 
 ## 7. GARCH risk overlay and transaction simulation
 
-Frozen definition:
+Configuration:
 
-~~~text
+```text
 config/garch_simulation_spec.json
-~~~
+```
 
 Run:
 
-~~~bash
+```bash
 python run_garch_oos_simulation.py
-~~~
+```
 
-GARCH(1,1) forecasts next-session volatility using expanding history. It only scales positions and never generates direction.
+GARCH(1,1) forecasts next-session volatility using expanding history and is used for position scaling.
 
-The fixed simulation uses the saved genuine OOS probabilities.
+The simulation uses saved out-of-sample directional probabilities.
 
 ## 8. Dashboard
 
-~~~bash
+```bash
 python -m streamlit run app.py
-~~~
+```
 
-The dashboard is read-only with respect to research results. It visualizes saved local artifacts; it does not silently retrain models.
+The dashboard reads generated result files and does not retrain models.
 
 ## 9. Validation
 
-~~~bash
+```bash
 python -m unittest discover -s tests -v
 python validate_repository.py
-~~~
+```
 
-CI runs compile checks, the synthetic methodology suite, and repository validation.
+CI runs compile checks, methodology tests, and repository validation.
 
-Large historical datasets and generated outputs are intentionally excluded from Git, so CI validates source methodology rather than attempting to rebuild the full BigQuery/FinBERT history.
+Large historical datasets, fitted model binaries, bootstrap replication files, and full simulation paths are excluded from Git. Compact empirical result tables are stored under `results/`.
