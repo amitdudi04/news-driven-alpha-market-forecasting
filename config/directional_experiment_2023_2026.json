@@ -1,0 +1,154 @@
+{
+  "experiment_id": "directional_incremental_sentiment_v1",
+  "frozen_before_model_fit": true,
+  "master_dataset": "data/master_session_dataset_2023_2026.csv",
+  "master_dataset_sha256": "ffff88505a3b5a42425d278510952bc9ee735d5a07cfbc58fb57df4f38861d23",
+  "eligibility_rule": "strict_model_ready == 1",
+  "partition_key": "target_session_date",
+  "split": {
+    "initial_development_train": {
+      "target_year": 2023,
+      "rows": 221
+    },
+    "chronological_validation": {
+      "target_year": 2024,
+      "rows": 242,
+      "scheme": "12 monthly expanding-window folds; each month is predicted using only eligible rows with earlier target_session_date"
+    },
+    "untouched_final_holdout": {
+      "target_year": 2025,
+      "rows": 223
+    },
+    "post_sample_robustness": {
+      "target_year": 2026,
+      "rows": 181,
+      "model_rule": "use the same locked model fitted on 2023-2024; do not retrain on 2025 before the primary robustness comparison"
+    }
+  },
+  "research_question": "Does adding timestamp-safe financial-news sentiment improve next-session CSI 300 directional probability forecasts relative to the same model family using market-only predictors?",
+  "target": {
+    "column": "target_direction_t_plus_1",
+    "definition": "1 if genuine next CSI 300 trading-session log return > 0, else 0",
+    "probability_threshold": 0.5
+  },
+  "market_only_features": [
+    "return_t",
+    "volatility_20_t",
+    "momentum_5_20_t",
+    "momentum_acceleration_t",
+    "regime_dummy_t"
+  ],
+  "sentiment_features_added": [
+    "unique_headline_count_t",
+    "sentiment_mean_t",
+    "sentiment_std_t",
+    "sentiment_roll_5",
+    "sentiment_roll_10",
+    "sentiment_roll_20",
+    "news_intensity_20",
+    "sentiment_x_volatility",
+    "sentiment_roll_5_x_volatility",
+    "sentiment_roll_20_x_volatility"
+  ],
+  "model_families": {
+    "logistic_regression": {
+      "preprocessing": "StandardScaler fitted only on each training window",
+      "penalty": "l2",
+      "solver": "lbfgs",
+      "max_iter": 5000,
+      "class_weight": null,
+      "candidate_grid": [
+        {"id": "logit_c_0.1", "C": 0.1},
+        {"id": "logit_c_1", "C": 1.0},
+        {"id": "logit_c_10", "C": 10.0}
+      ]
+    },
+    "xgboost": {
+      "objective": "binary:logistic",
+      "eval_metric": "logloss",
+      "tree_method": "hist",
+      "n_jobs": 2,
+      "random_state": 2027,
+      "class_weighting": "none",
+      "candidate_grid": [
+        {
+          "id": "xgb_a",
+          "n_estimators": 150,
+          "max_depth": 2,
+          "learning_rate": 0.03,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        {
+          "id": "xgb_b",
+          "n_estimators": 250,
+          "max_depth": 2,
+          "learning_rate": 0.03,
+          "min_child_weight": 3,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 2.0,
+          "reg_alpha": 0.0
+        },
+        {
+          "id": "xgb_c",
+          "n_estimators": 150,
+          "max_depth": 3,
+          "learning_rate": 0.03,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        {
+          "id": "xgb_d",
+          "n_estimators": 200,
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        }
+      ]
+    }
+  },
+  "hyperparameter_selection": {
+    "period": "2024 monthly expanding-window validation only",
+    "primary_metric": "brier_score_loss",
+    "selection_rule": "lowest aggregate 2024 Brier score; ties broken by lower log loss, then candidate id",
+    "same_rule_for_market_only_and_market_plus_sentiment": true
+  },
+  "final_fit": {
+    "training_target_years": [2023, 2024],
+    "retuning_after_2024": false
+  },
+  "evaluation_metrics": [
+    "balanced_accuracy",
+    "accuracy",
+    "brier_score_loss",
+    "log_loss",
+    "roc_auc",
+    "mean_predicted_up_probability",
+    "observed_up_rate"
+  ],
+  "incremental_comparison": {
+    "within_family": true,
+    "balanced_accuracy_improvement": "market_plus_sentiment - market_only",
+    "roc_auc_improvement": "market_plus_sentiment - market_only",
+    "brier_improvement": "market_only - market_plus_sentiment",
+    "log_loss_improvement": "market_only - market_plus_sentiment"
+  },
+  "interpretation_guardrails": [
+    "2024 is model-development evidence, not final test evidence.",
+    "2025 is untouched until all hyperparameters are selected from 2024.",
+    "2026 is a locked-model post-sample robustness check using the 2023-2024 final fit.",
+    "No trading, Sharpe, profitability, statistical-significance, or causal claims are inferred from this directional experiment alone.",
+    "A null or negative incremental-sentiment result is retained and reported."
+  ]
+}
