@@ -1,10 +1,15 @@
 # Academic Disclosure
 
-This repository presents a student research project in financial forecasting.
+This repository presents a student research project on whether timestamp-safe financial-news sentiment adds incremental next-session forecasting information for the CSI 300.
 
-- The committed news/sentiment sample begins on **2026-04-22** and currently contains **49 news days**.
-- The current empirical evidence is descriptive and exploratory; the short sample does not support model-performance, statistical-significance, causality, or durable-trading-edge claims.
-- Historical model evaluation uses chronological expanding-window splits.
-- Model-performance statistics are reported only after the configured minimum OOS evaluation sample is available.
-- A final model may be refit on all labelled observations for the next research prediction, but that refit is kept separate from the historical OOS evaluation.
-- The project is for research and educational use only; no live-capital execution is included.
+- The historical research period covers **2023–2026**, with 2022 used only as market/GARCH warm-up.
+- The predictive design was frozen before model fitting: 2023 initial development, 2024 chronological validation, 2025 untouched holdout, and 2026 locked-model robustness.
+- The main comparison is paired within model family: market-only versus market + sentiment.
+- Paired moving-block-bootstrap uncertainty is reported for incremental OOS differences.
+- The evidence is mixed. Some point estimates favor sentiment, especially XGBoost in 2026, but the principal 2025/2026 incremental effects are not statistically resolved at the 95% block-bootstrap level.
+- GARCH(1,1) is a separate volatility-risk overlay and does not generate the directional signal.
+- The transaction-cost simulation uses fixed research conventions and is not evidence of live-capital profitability.
+- No causal effect, Jensen alpha, guaranteed trading edge, or investment recommendation is claimed.
+- Negative and null results are retained rather than optimized away.
+
+The repository is for research and educational use only.

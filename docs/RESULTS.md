@@ -1,157 +1,284 @@
-# Results
+# Results — 2023–2026 Historical Study
 
 ## Research question
 
-The project asks whether **China-focused economic and financial news sentiment contains incremental information for forecasting the next CSI 300 trading-session direction** beyond market-only variables.
+Does **timestamp-safe China-focused financial-news sentiment** improve next-session CSI 300 directional forecasts beyond market-only information?
 
-The configured predictive comparison is:
+The primary comparison is paired within model family:
 
-- **Market-only model:** volatility, momentum, momentum acceleration and a volatility indicator constructed using only information available through the forecast date.
-- **Market + sentiment model:** the same market variables plus rolling FinBERT sentiment, sentiment dispersion, news intensity and sentiment-volatility interactions.
+- logistic market-only vs logistic market + sentiment;
+- XGBoost market-only vs XGBoost market + sentiment.
 
-With the current short sample, the repository reports **descriptive evidence only**. The predictive comparison is an implemented evaluation framework rather than a validated model result.
+The study separates directional forecasting from the GARCH risk overlay.
 
-## Sample and market environment
+## 1. Historical sample
 
-| Item | Current evidence |
+### News layer
+
+| Item | Result |
 |---|---:|
-| News days | 49 |
-| Sentiment days | 49 |
-| News period | 22 Apr 2026 – 6 Jul 2026 |
-| GDELT title/headline observations scored by FinBERT | 6,919 |
-| Mean title/headline observations per news day | 141.2 |
-| Median title/headline observations per news day | 150 |
-| Mean daily FinBERT sentiment | +0.0551 |
-| CSI 300 observations in committed market file | 221 |
+| News period | 1 Jan 2023 – 3 Oct 2026 |
+| FinBERT-scored headline observations entering alignment | 292,373 |
+| Assigned to completed market-close windows | 291,973 |
+| Pending after last known CSI 300 close | 400 |
+| Session-unique normalized headlines used for pooled sentiment | 276,960 |
+| Within-session repeats removed | 15,013 |
 
-For the **49 CSI 300 trading sessions from 22 April through 3 July 2026**:
+The 400 pending observations occur after the 30 Sep 2026 close and are not assigned backward.
 
-| Market statistic | Value |
+### CSI 300 market layer
+
+| Item | Result |
 |---|---:|
-| Up sessions | 25 |
-| Down sessions | 24 |
-| Compounded return from the stored session log returns | **+1.56%** |
-| First-close to last-close price change | **+0.89%** |
-| Annualized realized volatility | **20.78%** |
-| Mean 20-day daily volatility estimate | **1.13%** |
+| Market history | 4 Jan 2022 – 30 Sep 2026 |
+| Total trading sessions | 1,150 |
+| 2022 warm-up sessions | 242 |
+| Research sessions from 2023 | 908 |
+| Primary / cross-check overlap | 1,150 sessions |
+| Max close discrepancy | 0.005 index points |
 
-The two return figures use different boundaries: the compounded session-return figure includes the stored return for 22 April, which is measured from the preceding trading close, whereas the first-close to last-close figure begins at the 22 April closing level.
+2022 is used only for rolling-feature and GARCH warm-up.
 
-## Trading-session alignment
+## 2. Timestamp-safe alignment
 
-The end-of-day alignment produces:
+Forecast cutoff: **15:00 Asia/Shanghai**.
 
-| Alignment statistic | Value |
+Information window:
+
+```text
+(previous CSI 300 trading close, current CSI 300 trading close]
+```
+
+Headline assignment:
+
+| Relationship | Headlines |
 |---|---:|
-| CSI 300 sessions in the aligned window | 49 |
-| Sessions with usable news assigned | 31 |
-| Sessions without usable news coverage | 18 |
-| Sentiment / next-session-return pairs | 31 |
+| same trading day at/before close | 130,233 |
+| after-close trading-day news moved to next session | 102,814 |
+| non-trading-day news moved to next session | 58,926 |
+| pending after last known close | 400 |
 
-Weekend and holiday news is assigned to the next available trading-session information set. Missing news coverage remains missing rather than being converted to neutral sentiment.
+Audit:
 
-## Descriptive sentiment-return evidence
+- article/FinBERT unmatched rows: **0**
+- Shanghai-date mismatches: **0**
+- causal-window violations: **0**
 
-Using the 31 aligned observations, the **Spearman time-series rank correlation** between session-level sentiment and the next-session CSI 300 return is:
+## 3. Master session dataset
 
-**Spearman correlation = -0.348**
+| Item | Result |
+|---|---:|
+| CSI 300 master sessions | 908 |
+| Known next-session targets | 907 |
+| Strict model-ready rows | 867 |
+| Genuine no-news sessions | 1 |
+| No-news date | 20 Jun 2025 |
 
-The corresponding linear correlation is:
+The no-news session retains missing sentiment; it is not converted to neutral sentiment.
 
-**Pearson correlation = -0.246**
+Target balance among all 907 labeled sessions:
 
-These are descriptive statistics from a short sample; no statistical-significance or causal claim is made.
+- up: 450
+- down/flat: 457
 
-The negative association means that higher raw sentiment did not correspond monotonically to higher next-session CSI 300 returns in this sample.
+## 4. Frozen experimental split
 
-### Sentiment-sorted next-session returns
+The split uses **target_session_date**.
 
-| Sentiment group | Observations | Mean sentiment | Mean next-session CSI 300 return | Next session positive |
-|---|---:|---:|---:|---:|
-| Lowest-sentiment tercile | 10 | +0.0177 | **+0.305%** | **70.0%** |
-| Middle tercile | 10 | +0.0610 | **+0.011%** | **50.0%** |
-| Highest-sentiment tercile | 11 | +0.1236 | **-0.161%** | **27.3%** |
+| Target year | Role | Strict rows |
+|---|---|---:|
+| 2023 | initial training | 221 |
+| 2024 | monthly expanding validation | 242 |
+| 2025 | untouched holdout | 223 |
+| 2026 | locked-model robustness | 181 |
 
-The descriptive high-minus-low return difference is approximately **-0.466 percentage points**.
+There are 12 expanding monthly validation folds in 2024 for each of four models. Audit found **0 fold leakages**.
 
-A simple rule that predicts next-session direction only from the sign of raw sentiment is correct on **45.2%** of the 31 aligned observations.
+Hyperparameters are selected by **lowest aggregate 2024 Brier score**, with log loss and candidate ID as tie-breakers.
 
-The negative association is not interpreted as evidence of a contrarian anomaly. With only 31 aligned observations, it may reflect sample composition, timing, omitted information or ordinary sampling variation.
+Selected specifications:
 
-Taken together, these statistics do not support a simple rule that more positive news is followed by a higher next-session market return. They motivate, rather than establish, the hypothesis that news may be more informative when considered jointly with momentum, volatility and news intensity.
+- Logistic market-only: C = 0.1
+- Logistic + sentiment: C = 0.1
+- XGBoost market-only: 150 trees, depth 2, learning rate 0.03, min child weight 5, subsample/column sample 0.9, L2 = 5
+- XGBoost + sentiment: same XGBoost configuration
 
-## Predictive-model evaluation protocol
+## 5. Directional OOS performance
 
-The feature set uses rolling sentiment measures, sentiment momentum and dispersion, news intensity, market momentum, sentiment-volatility interactions and a volatility indicator constructed using only information available through the forecast date.
+### 2024 chronological development validation
 
-After rolling-feature construction and next-session target formation, the current sample contains only **8 labelled model rows**. This is far too small for credible machine-learning validation and is insufficient for the configured walk-forward evaluation.
+| Model | Balanced accuracy | Accuracy | Brier | Log loss | ROC AUC |
+|---|---:|---:|---:|---:|---:|
+| Logistic market | 0.4996 | 0.5041 | 0.2703 | 0.7469 | 0.5080 |
+| Logistic + sentiment | 0.4923 | 0.4959 | 0.2770 | 0.7724 | 0.5151 |
+| XGB market | 0.5188 | 0.5207 | 0.2623 | 0.7209 | 0.5354 |
+| XGB + sentiment | 0.5301 | 0.5331 | 0.2665 | 0.7306 | 0.5065 |
 
-The research configuration separates two thresholds:
+Development evidence is mixed.
 
-- **60 labelled observations** are required for the initial expanding training window.
-- At least **30 genuine OOS forecasts** are required before model-performance statistics are published.
+### 2025 untouched holdout
 
-The 30-observation rule is only a minimum reporting floor, not a statistical-power claim and not evidence that 30 forecasts would be sufficient to establish a durable effect. With the current sample, the repository therefore does not report XGBoost accuracy, Sharpe ratio, active return or simulated-strategy performance.
+| Model | Balanced accuracy | Accuracy | Brier | Log loss | ROC AUC |
+|---|---:|---:|---:|---:|---:|
+| Logistic market | 0.4829 | 0.4709 | 0.2562 | 0.7057 | 0.5086 |
+| Logistic + sentiment | 0.5127 | 0.5022 | 0.2568 | 0.7070 | 0.5132 |
+| XGB market | 0.5106 | 0.4888 | 0.2624 | 0.7191 | 0.5057 |
+| XGB + sentiment | 0.5078 | 0.4843 | 0.2604 | 0.7146 | 0.5194 |
 
-When the threshold is reached, the primary model question is whether the **market + sentiment** XGBoost model improves on the **market-only** XGBoost baseline out of sample.
+Interpretation:
 
-## Risk and economic evaluation
+- Logistic + sentiment improves threshold classification but slightly worsens Brier/log loss.
+- XGB + sentiment slightly worsens threshold classification but improves Brier, log loss, and AUC.
+- There is no uniform sentiment advantage.
 
-GARCH(1,1) is estimated separately from the directional model and provides one-step-ahead volatility forecasts for position scaling.
+### 2026 locked-model robustness
 
-The prospective simulated-strategy rule uses:
+The same final 2023–2024 fits are used; 2025 is **not** added to training.
 
-- p(up) >= 0.55 → LONG;
-- p(up) <= 0.45 → SHORT;
-- otherwise → NO TRADE;
-- absolute position size capped at **1.0x**;
-- **10 bps** proportional transaction cost per unit of turnover.
+| Model | Balanced accuracy | Accuracy | Brier | Log loss | ROC AUC |
+|---|---:|---:|---:|---:|---:|
+| Logistic market | 0.4806 | 0.4807 | 0.2563 | 0.7059 | 0.4856 |
+| Logistic + sentiment | 0.5144 | 0.5138 | 0.2563 | 0.7063 | 0.4929 |
+| XGB market | 0.5020 | 0.5028 | 0.2531 | 0.6992 | 0.5424 |
+| XGB + sentiment | **0.5568** | **0.5580** | **0.2502** | **0.6935** | **0.5458** |
 
-The probability thresholds and 10 bps transaction-cost assumption are fixed simulation conventions, not values optimized on the current short sample. Market log returns are converted to simple returns before position weighting, transaction costs and wealth compounding.
+The strongest point evidence occurs for XGB + sentiment in 2026.
 
-When enough OOS observations exist, the evaluation reports:
+## 6. Calibration
 
-- cumulative strategy return;
-- CSI 300 benchmark return;
-- benchmark-relative active return;
-- annualized Sharpe ratio under a zero risk-free-rate convention;
-- maximum drawdown;
-- directional hit rate on active signals;
-- average turnover;
-- transaction-cost drag.
+Ideal calibration intercept = 0 and slope = 1.
 
-The project title uses “Alpha,” but **Jensen's alpha is not claimed** without an explicit asset-pricing regression.
+Selected examples:
 
-## Reproducibility
+| Model | Period | Intercept | Slope | 5-bin ECE |
+|---|---|---:|---:|---:|
+| Logistic market | 2025 | 0.201 | 0.310 | 0.0840 |
+| Logistic + sentiment | 2025 | 0.191 | 0.271 | 0.0760 |
+| XGB market | 2025 | 0.189 | 0.159 | 0.0984 |
+| XGB + sentiment | 2025 | 0.225 | 0.309 | 0.1084 |
+| XGB market | 2026 | 0.032 | 0.384 | 0.0963 |
+| XGB + sentiment | 2026 | 0.074 | 0.556 | **0.0485** |
 
-Run:
+Calibration slopes are generally far below 1. The probabilities should therefore be treated as ranking/forecast scores rather than perfectly calibrated event probabilities.
 
-~~~bash
-python run_research_pipeline.py
-~~~
+## 7. Paired block-bootstrap uncertainty
 
-With the current committed sample, the command regenerates:
+Frozen procedure:
 
-~~~text
-outputs/descriptive_summary.csv
-outputs/sentiment_terciles.csv
-data/final_dataset.csv
-~~~
+- circular moving-block bootstrap;
+- 10 trading-session blocks;
+- 5,000 paired resamples;
+- identical bootstrap indices for market-only and market+sentiment;
+- 95% percentile intervals.
 
-The generated output files are excluded from version control so that stale local outputs are not presented as current evidence.
+A positive increment favors sentiment.
 
-After the configured OOS reporting threshold is reached, the same pipeline also produces:
+### 2025 holdout
 
-~~~text
-outputs/model_evaluation.csv
-outputs/oos_predictions.csv
-outputs/garch_oos_forecasts.csv
-outputs/oos_backtest.csv
-outputs/oos_backtest_metrics.csv
-~~~
+| Family | Metric | Point increment | 95% interval | Resolution |
+|---|---|---:|---:|---|
+| Logistic | balanced accuracy | +0.0299 | [-0.0127, +0.0737] | unresolved |
+| Logistic | Brier improvement | -0.00058 | [-0.00544, +0.00436] | unresolved |
+| XGB | balanced accuracy | -0.0028 | [-0.0495, +0.0440] | unresolved |
+| XGB | Brier improvement | +0.00199 | [-0.00569, +0.00951] | unresolved |
+| XGB | log-loss improvement | +0.00451 | [-0.01150, +0.02037] | unresolved |
+| XGB | AUC improvement | +0.01375 | [-0.04464, +0.07103] | unresolved |
 
-## Conclusion
+All 2025 incremental effects are statistically unresolved at the 95% block-bootstrap level.
 
-The current evidence supports a **limited descriptive feasibility conclusion**: **raw China-focused news sentiment is not a simple monotonic positive next-session signal for the CSI 300 in the committed sample**.
+### 2026 robustness
 
-The negative rank association and sentiment-sorted return pattern motivate a configured out-of-sample test of whether rolling sentiment, news-intensity measures and sentiment-volatility interactions add incremental predictive information beyond market-only variables. No persistent forecasting advantage, causal effect or profitable trading strategy is claimed from the current sample.
+| Family | Metric | Point increment | 95% interval | Resolution |
+|---|---|---:|---:|---|
+| Logistic | balanced accuracy | +0.0338 | [-0.0132, +0.0810] | unresolved |
+| XGB | balanced accuracy | **+0.0548** | **[-0.0020, +0.1183]** | unresolved |
+| XGB | Brier improvement | +0.00293 | [-0.00532, +0.01126] | unresolved |
+| XGB | log-loss improvement | +0.00578 | [-0.01113, +0.02280] | unresolved |
+| XGB | ECE improvement | +0.04779 | [-0.04995, +0.09233] | unresolved |
+| XGB | AUC improvement | +0.00336 | [-0.05697, +0.06506] | unresolved |
+
+For XGB 2026 balanced accuracy, 97.0% of bootstrap draws are positive, but the 95% interval still crosses zero. This is suggestive, not resolved.
+
+### Resolved negative development result
+
+In 2024 logistic validation:
+
+- Brier increment = **-0.00670**, 95% CI **[-0.01341, -0.00045]**
+- log-loss increment = **-0.02550**, 95% CI **[-0.04985, -0.00466]**
+
+Under the frozen interpretation rule, sentiment is resolved as **worse** on these two probabilistic metrics in that development period.
+
+## 8. GARCH(1,1) volatility overlay
+
+GARCH is separate from direction prediction.
+
+- expanding one-step forecasts;
+- zero mean;
+- Normal innovations;
+- returns scaled ×100 during fitting;
+- 907 forecasts from 3 Jan 2023 through 29 Sep 2026;
+- **0 convergence failures**.
+
+OOS GARCH diagnostics:
+
+| Period | N | Mean forecast vol | Mean |r next| | Mean QLIKE | Mean risk scale |
+|---|---:|---:|---:|---:|---:|
+| 2024 validation | 242 | 1.114% | 0.855% | -8.015 | 0.889 |
+| 2025 holdout | 223 | 1.031% | 0.685% | -8.095 | 0.927 |
+| 2026 robustness | 181 | 1.117% | 0.908% | -7.921 | 0.876 |
+
+QLIKE is reported as `log(h) + r²/h`; only relative comparisons are meaningful because additive constants are omitted.
+
+## 9. Fixed-rule transaction-cost simulation
+
+Frozen conventions:
+
+- long if p(up) >= 0.55;
+- short if p(up) <= 0.45;
+- otherwise flat;
+- max absolute exposure 1.0;
+- 10 bps cost per unit of turnover;
+- each reporting period starts flat;
+- GARCH position scale is capped at 1;
+- market log returns are converted with `expm1` before strategy compounding.
+
+### XGBoost models — GARCH-scaled simulation
+
+| Period | Model | Net return | Benchmark | Active-return difference | Net Sharpe | Max drawdown |
+|---|---|---:|---:|---:|---:|---:|
+| 2024 | market only | +0.52% | +14.68% | -14.16% | 0.11 | -10.25% |
+| 2024 | + sentiment | **+5.54%** | +14.68% | -9.14% | **0.49** | -11.02% |
+| 2025 | market only | -10.71% | +11.52% | -22.23% | -0.94 | -19.77% |
+| 2025 | + sentiment | **-7.27%** | +11.52% | -18.79% | **-0.57** | **-17.98%** |
+| 2026 | market only | -0.45% | -5.88% | +5.43% | 0.02 | **-8.25%** |
+| 2026 | + sentiment | **+3.12%** | -5.88% | **+9.00%** | **0.40** | -10.85% |
+
+The sentiment XGB strategy outperforms the paired market-only strategy in cumulative return in all three reporting periods under this fixed simulation. This **does not** establish profitable alpha:
+
+- both XGB strategies materially underperform the benchmark in 2024 and 2025;
+- simulation thresholds are fixed conventions rather than optimized policies;
+- directional probabilities are imperfectly calibrated;
+- no uncertainty interval is attached to simulated-return differences here;
+- the simulation is historical and not live-capital evidence.
+
+### GARCH overlay effect
+
+The volatility scale generally reduces maximum drawdown magnitude relative to the unscaled signal, but total-return effects are mixed. This is consistent with its intended role as a **risk overlay**, not an alpha generator.
+
+## 10. Final conclusion
+
+The historical reconstruction materially changes the project's evidentiary status.
+
+The project is no longer a 49-day feasibility sample. It is now a multi-year, timestamp-safe OOS study with:
+
+- genuine 2025 holdout;
+- locked 2026 robustness;
+- paired model-family ablations;
+- calibration diagnostics;
+- block-bootstrap uncertainty;
+- separate volatility overlay;
+- transaction-cost simulation.
+
+The central result remains cautious:
+
+> Sentiment sometimes improves CSI 300 directional forecasts and fixed-rule simulated performance, especially for XGBoost in 2026, but the incremental directional effects are not statistically resolved at the 95% block-bootstrap level. The evidence supports a mixed incremental-information conclusion, not a durable-alpha claim.
