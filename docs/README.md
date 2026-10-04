@@ -14,6 +14,5 @@ Recommended reading order:
 8. [Reproducibility](REPRODUCIBILITY.md) — build and evaluation sequence.
 9. [Research Scope](RESEARCH_SCOPE.md) — concise description of the study and its coverage.
 10. [Academic Disclosure](ACADEMIC_DISCLOSURE.md) — explicit claims, limitations, and research-use disclosure.
-11. [Oral Defense Guide](ORAL_DEFENSE_GUIDE.md) — interview-ready project summary, methodological defense, and likely questions.
 
 Compact empirical result files are available under `results/`. Large generated datasets and model binaries remain local.
