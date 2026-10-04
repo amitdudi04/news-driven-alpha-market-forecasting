@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def fail(message: str) -> None:
@@ -55,32 +55,38 @@ def validate_static_structure() -> None:
 
     required = {
         "README.md",
+        "MODEL_CARD.md",
+        "ACADEMIC_DISCLOSURE.md",
         "SECURITY.md",
+        "requirements.txt",
         "app.py",
-        "headline_utils.py",
-        "bigquery_gdelt_backfill.py",
-        "finbert_backfill.py",
         "build_historical_market.py",
         "build_session_alignment.py",
         "build_master_session_dataset.py",
         "run_directional_experiment.py",
         "evaluate_oos_uncertainty.py",
-        "run_garch_oos_simulation.py",
+        "evaluate_garch_risk_overlay.py",
         "config/directional_experiment_2023_2026.json",
         "config/oos_uncertainty_spec.json",
         "config/garch_simulation_spec.json",
         "tests/test_research_methodology.py",
-        "docs/README.md",
-        "docs/ARCHITECTURE.md",
+        "scripts/validate_repository.py",
+        "src/__init__.py",
+        "src/data_pipeline/__init__.py",
+        "src/data_pipeline/collect_news.py",
+        "src/data_pipeline/score_sentiment.py",
+        "src/data_pipeline/consolidate_news.py",
+        "src/data_pipeline/consolidate_sentiment.py",
+        "src/utils/__init__.py",
+        "src/utils/headlines.py",
         "docs/DATA_CARD.md",
         "docs/DATA_DICTIONARY.md",
         "docs/EXPERIMENT_DESIGN.md",
         "docs/RESULTS.md",
-        "docs/MODEL_CARD.md",
         "docs/LIMITATIONS.md",
         "docs/REPRODUCIBILITY.md",
         "docs/RESEARCH_SCOPE.md",
-        "docs/ORAL_DEFENSE_GUIDE.md",
+        "docs/INTERVIEW_DEFENSE_2023_2026.md",
         "results/README.md",
         "results/results_manifest.json",
         "results/directional_oos_metrics.csv",
@@ -99,6 +105,21 @@ def validate_static_structure() -> None:
         fail(f"Required tracked files missing: {missing}")
 
     obsolete = {
+        "run_fast_one_year_rebuild.py",
+        "run_fast_two_year_rebuild.py",
+        "run_fast_2026_rebuild.py",
+        "bigquery_gdelt_backfill.py",
+        "finbert_backfill.py",
+        "consolidate_bigquery_backfill.py",
+        "consolidate_finbert_backfill.py",
+        "headline_utils.py",
+        "validate_repository.py",
+        "run_garch_oos_simulation.py",
+        "docs/README.md",
+        "docs/ARCHITECTURE.md",
+        "docs/MODEL_CARD.md",
+        "docs/ACADEMIC_DISCLOSURE.md",
+        "docs/ORAL_DEFENSE_GUIDE.md",
         "descriptive_analysis.py",
         "module1_news.py",
         "module2_sentiment.py",
@@ -109,70 +130,45 @@ def validate_static_structure() -> None:
         "module7_backtesting.py",
         "module12_inference.py",
         "module13_signal_engine.py",
-        "run_research_pipeline.py",
         "run_daily_pipeline.py",
         "run_one_year_rebuild.py",
         "sampled_news_backfill.py",
         "run_sampled_news_backfill.py",
         "config/research_config.py",
         "config/asset_registry.json",
-        "data/news_daily.csv",
-        "data/sentiment_features.csv",
-        "data/csi300_features.csv",
-        "ACADEMIC_DISCLOSURE.md",
-        "ARCHITECTURE.md",
-        "DATA_CARD.md",
-        "MODEL_CARD.md",
         "PIPELINE.md",
         "PROJECT_LIMITATIONS.md",
-        "docs/INTERVIEW_DEFENSE_2023_2026.md",
     }
     still_tracked = sorted(obsolete & tracked)
     if still_tracked:
         fail(
-            "Obsolete or superseded public files still tracked: "
+            "Obsolete/development-facing files still tracked: "
             f"{still_tracked}"
         )
 
     generated_tracked = sorted(
         path
         for path in tracked
-        if (
-            path.startswith("data/")
-            and path != "data/.gitkeep"
-        )
-        or (
-            path.startswith("outputs/")
-            and path != "outputs/.gitkeep"
-        )
-        or (
-            path.startswith("models/")
-            and path != "models/.gitkeep"
-        )
-        or (
-            path.startswith("logs/")
-            and path != "logs/.gitkeep"
-        )
+        if path.startswith(("data/", "outputs/", "models/", "logs/"))
     )
     if generated_tracked:
         fail(
-            "Generated data/model/result artifacts must not be tracked: "
+            "Generated data/model/output/log artifacts must not be tracked: "
             f"{generated_tracked}"
         )
 
     public_docs = [
         "README.md",
-        "docs/README.md",
-        "docs/ARCHITECTURE.md",
+        "MODEL_CARD.md",
+        "ACADEMIC_DISCLOSURE.md",
         "docs/DATA_CARD.md",
         "docs/DATA_DICTIONARY.md",
         "docs/EXPERIMENT_DESIGN.md",
         "docs/RESULTS.md",
-        "docs/MODEL_CARD.md",
         "docs/LIMITATIONS.md",
         "docs/REPRODUCIBILITY.md",
         "docs/RESEARCH_SCOPE.md",
-        "docs/ORAL_DEFENSE_GUIDE.md",
+        "docs/INTERVIEW_DEFENSE_2023_2026.md",
         "results/README.md",
     ]
     forbidden_phrases = [
@@ -181,20 +177,39 @@ def validate_static_structure() -> None:
         "only 8 labelled",
         "only 8 labeled",
         "2026-04-22",
-        "run_research_pipeline.py",
+        "run_fast_one_year_rebuild.py",
+        "run_fast_two_year_rebuild.py",
+        "run_fast_2026_rebuild.py",
+        "run_garch_oos_simulation.py",
+        "docs/model_card.md",
+        "docs/academic_disclosure.md",
+        "docs/oral_defense_guide.md",
+        "python validate_repository.py",
         "data/news_daily.csv",
         "data/csi300_features.csv",
-        "significantly worsens",
         "interview-ready project defense",
     ]
     for relative in public_docs:
-        text = (
-            ROOT / relative
-        ).read_text(encoding="utf-8").casefold()
+        text = (ROOT / relative).read_text(encoding="utf-8").casefold()
         for phrase in forbidden_phrases:
             if phrase.casefold() in text:
                 fail(
                     f"Stale phrase {phrase!r} remains in {relative}"
+                )
+
+    # Flag common mojibake/replacement characters in admissions-facing text.
+    suspicious_text = [
+        chr(0xFFFD),
+        chr(0x00C2),
+        chr(0x00C3),
+        chr(0x00E2) + chr(0x20AC),
+    ]
+    for relative in public_docs:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        for marker in suspicious_text:
+            if marker in text:
+                fail(
+                    f"Encoding artifact {marker!r} remains in {relative}"
                 )
 
     # Check local Markdown links without requiring network access.
@@ -308,6 +323,53 @@ def validate_committed_results_snapshot() -> None:
     )
     manifest = load_json("results/results_manifest.json")
 
+    if manifest.get("experiment_id") != direction.get("experiment_id"):
+        fail("Committed result manifest experiment_id does not match.")
+
+    if manifest.get("partition_key") != direction.get("partition_key"):
+        fail("Committed result manifest partition key does not match.")
+
+    expected_selection_rule = (
+        "lowest aggregate 2024 Brier score; ties broken by lower "
+        "log loss, then candidate id"
+    )
+    if manifest.get("model_selection_rule") != expected_selection_rule:
+        fail("Committed result manifest selection rule changed.")
+
+    expected_split_manifest = {
+        "2023_initial_training": 221,
+        "2024_chronological_validation": 242,
+        "2025_untouched_holdout": 223,
+        "2026_temporal_robustness": 181,
+    }
+    if manifest.get("split") != expected_split_manifest:
+        fail("Committed result manifest split changed.")
+
+    for key in ["research_source_commit", "results_snapshot_commit"]:
+        value = str(manifest.get(key, ""))
+        if len(value) != 40 or any(
+            char not in "0123456789abcdef" for char in value.lower()
+        ):
+            fail(f"Malformed manifest Git commit hash: {key}")
+
+    expected_result_files = {
+        "directional_oos_metrics.csv",
+        "incremental_sentiment_comparison.csv",
+        "oos_predictions.csv",
+        "selected_hyperparameters.json",
+        "calibration_metrics.csv",
+        "block_bootstrap_summary.csv",
+        "garch_forecasts.csv",
+        "garch_forecast_metrics.csv",
+        "simulation_metrics.csv",
+        "paired_simulation_comparison.csv",
+    }
+    if set(manifest.get("tracked_result_files", [])) != expected_result_files:
+        fail("Committed result manifest file inventory changed.")
+    for name in expected_result_files:
+        if not (ROOT / "results" / name).exists():
+            fail(f"Manifest result file is missing: {name}")
+
     if (
         manifest.get("master_dataset_sha256")
         != direction["master_dataset_sha256"]
@@ -326,6 +388,7 @@ def validate_committed_results_snapshot() -> None:
         "session_unique_headlines": 276960,
         "timestamp_alignment_timing_violations": 0,
         "garch_forecasts": 907,
+        "garch_convergence_failures": 0,
         "directional_prediction_rows": 2584,
         "bootstrap_replications_per_metric": 5000,
     }

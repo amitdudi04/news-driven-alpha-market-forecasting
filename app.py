@@ -587,7 +587,7 @@ with tabs[4]:
 
     if garch_metrics is None or simulation_metrics is None:
         st.info(
-            "Run python run_garch_oos_simulation.py to populate "
+            "Run python evaluate_garch_risk_overlay.py to populate "
             "GARCH and simulation results."
         )
     else:
@@ -710,7 +710,7 @@ python build_session_alignment.py
 python build_master_session_dataset.py
 python run_directional_experiment.py
 python evaluate_oos_uncertainty.py
-python run_garch_oos_simulation.py
+python evaluate_garch_risk_overlay.py
 python -m streamlit run app.py""",
         language="bash",
     )

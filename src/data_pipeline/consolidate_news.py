@@ -40,15 +40,15 @@ def main() -> None:
     parser.add_argument("--end", required=True, type=parse_date)
     parser.add_argument(
         "--input-dir",
-        default="data/bigquery_backfill_2023_2025",
+        default="data/gdelt_headlines",
     )
     parser.add_argument(
         "--output",
-        default="data/news_daily_bigquery_2023_2025.csv",
+        default="data/news_daily_historical.csv",
     )
     parser.add_argument(
         "--summary",
-        default="data/bigquery_backfill_2023_2025_summary.json",
+        default="data/gdelt_headlines_summary.json",
     )
     args = parser.parse_args()
 

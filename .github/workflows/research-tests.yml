@@ -29,4 +29,4 @@ jobs:
         run: python -m unittest discover -s tests -v
 
       - name: Validate repository structure and frozen specs
-        run: python validate_repository.py
+        run: python scripts/validate_repository.py

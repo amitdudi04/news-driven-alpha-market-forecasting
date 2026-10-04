@@ -19,8 +19,8 @@ from evaluate_oos_uncertainty import (
     circular_block_indices,
     delta_metrics,
 )
-from headline_utils import split_headlines
-from run_garch_oos_simulation import simulate_position_path
+from src.utils.headlines import split_headlines
+from evaluate_garch_risk_overlay import simulate_position_path
 
 
 ROOT = Path(__file__).resolve().parents[1]

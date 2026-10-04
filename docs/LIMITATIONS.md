@@ -28,26 +28,26 @@ The principal directional models are logistic regression and shallow XGBoost. Ot
 
 ## 7. Sample size and uncertainty
 
-The model-ready sample contains 867 observations:
+The strict model-ready sample contains **867** observations:
 
 - 221 target-year 2023 rows;
 - 242 target-year 2024 rows;
 - 223 target-year 2025 rows;
 - 181 target-year 2026 rows.
 
-Principal 2025 and 2026 bootstrap intervals for incremental sentiment effects include zero.
+Principal 2025 and 2026 paired bootstrap intervals for incremental sentiment effects include zero.
 
 ## 8. Probability calibration
 
-Calibration slopes are generally below 1, so predicted probabilities are not perfectly calibrated.
+Calibration slopes are generally below 1, so predicted probabilities are not perfectly calibrated event probabilities.
 
 ## 9. GARCH specification
 
-The volatility overlay uses a zero-mean Normal GARCH(1,1). Alternative volatility models, distributions, or structural-break treatments are outside the present scope.
+The volatility overlay uses a zero-mean Normal GARCH(1,1). Alternative volatility models, innovation distributions, and structural-break treatments are outside the present scope.
 
 ## 10. Transaction-cost simulation
 
-The simulation uses fixed signal thresholds and 10 bps turnover cost.
+The simulation uses fixed signal thresholds and a 10 bps turnover cost.
 
 It does not model:
 
@@ -62,4 +62,10 @@ It does not model:
 
 ## 11. Scope of inference
 
-The study covers one equity index, one news-source construction, one sentiment model, and the 2023–2026 period. Results may differ in other markets, languages, data sources, or time periods.
+The study covers one equity index, one news-source construction, one sentiment model, and the 2023-2026 period.
+
+Results may differ in other markets, languages, data sources, or time periods.
+
+## 12. Interpretation boundary
+
+The project does not establish causality, Jensen alpha, guaranteed trading profitability, or persistence outside the studied sample.

@@ -32,7 +32,7 @@ It contains one row per CSI 300 trading session.
 
 | Column | Definition |
 |---|---|
-| `unique_headline_count_t` | Number of normalized unique titles in the session window. |
+| `unique_headline_count_t` | Number of normalized unique titles in the session information window. |
 | `headline_observation_count_t` | Number of assigned headline observations before within-session de-duplication. |
 | `has_news_t` | 1 when at least one unique headline is available; otherwise 0. |
 | `prior_20_session_mean_unique_headlines` | Mean unique-headline count over the prior 20 sessions, excluding the current session. |
@@ -42,14 +42,14 @@ It contains one row per CSI 300 trading session.
 
 | Column | Definition |
 |---|---|
-| `sentiment_mean_t` | Mean FinBERT sentiment score in the session window. |
+| `sentiment_mean_t` | Mean FinBERT sentiment score in the session information window. |
 | `sentiment_std_t` | Sample standard deviation of session sentiment scores; 0 when exactly one unique headline is present. |
 | `positive_share_t` | Share of session-unique headlines classified positive. |
 | `negative_share_t` | Share classified negative. |
 | `neutral_share_t` | Share classified neutral. |
 | `sentiment_roll_5` | Five-session rolling mean of `sentiment_mean_t`, requiring a complete window. |
-| `sentiment_roll_10` | Ten-session rolling mean of `sentiment_mean_t`. |
-| `sentiment_roll_20` | Twenty-session rolling mean of `sentiment_mean_t`. |
+| `sentiment_roll_10` | Ten-session rolling mean of `sentiment_mean_t`, requiring a complete window. |
+| `sentiment_roll_20` | Twenty-session rolling mean of `sentiment_mean_t`, requiring a complete window. |
 
 Missing news is not converted to a neutral or zero sentiment value.
 
@@ -57,9 +57,9 @@ Missing news is not converted to a neutral or zero sentiment value.
 
 | Column | Definition |
 |---|---|
-| `sentiment_x_volatility` | `sentiment_mean_t × volatility_20_t`. |
-| `sentiment_roll_5_x_volatility` | `sentiment_roll_5 × volatility_20_t`. |
-| `sentiment_roll_20_x_volatility` | `sentiment_roll_20 × volatility_20_t`. |
+| `sentiment_x_volatility` | `sentiment_mean_t * volatility_20_t`. |
+| `sentiment_roll_5_x_volatility` | `sentiment_roll_5 * volatility_20_t`. |
+| `sentiment_roll_20_x_volatility` | `sentiment_roll_20 * volatility_20_t`. |
 
 ## Target columns
 
@@ -70,9 +70,9 @@ Missing news is not converted to a neutral or zero sentiment value.
 
 ## Final counts
 
-- 908 trading-session rows
-- 907 known next-session targets
-- 867 model-ready rows
-- one no-news session: 20 Jun 2025
+- **908** trading-session rows
+- **907** known next-session targets
+- **867** model-ready rows
+- one no-news research session: **20 Jun 2025**
 
 The experiment configuration records the SHA-256 of the master dataset so the modeling script can verify that it is running on the intended data version.
