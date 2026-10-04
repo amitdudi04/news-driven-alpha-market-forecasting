@@ -1,0 +1,62 @@
+{
+  "analysis_id": "garch_risk_overlay_and_simulation_v1",
+  "directional_predictions": "outputs/directional_experiment_v1/predictions.csv",
+  "market_history": "data/csi300_market_features_2022_2026.csv",
+  "garch": {
+    "model": "GARCH(1,1)",
+    "mean": "Zero",
+    "distribution": "normal",
+    "return_scale_for_fit": 100.0,
+    "min_train_observations": 60,
+    "forecast_horizon": 1,
+    "forecast_start": "2023-01-03",
+    "information_rule": "forecast for t+1 is fit using returns observed through trading session t only",
+    "risk_reference": "expanding median of GARCH one-step volatility forecasts strictly prior to t",
+    "risk_reference_min_periods": 5,
+    "risk_scale": "clip(prior_expanding_median_forecast_vol / current_forecast_vol, 0, 1)"
+  },
+  "directional_signal": {
+    "long_probability_threshold": 0.55,
+    "short_probability_threshold": 0.45,
+    "max_abs_position": 1.0,
+    "thresholds_optimized": false
+  },
+  "transaction_cost": {
+    "rate_per_unit_turnover": 0.001,
+    "description": "10 bps per unit change in position",
+    "optimized": false
+  },
+  "simulation": {
+    "periods": [
+      "2024_validation",
+      "2025_holdout",
+      "2026_robustness"
+    ],
+    "models": [
+      "logistic_market_only",
+      "logistic_market_plus_sentiment",
+      "xgboost_market_only",
+      "xgboost_market_plus_sentiment"
+    ],
+    "period_initial_position": 0.0,
+    "compare_unscaled_signal_and_garch_scaled_position": true,
+    "benchmark": "CSI 300 next-session simple return derived with expm1 from stored log return",
+    "risk_free_rate_for_sharpe": 0.0,
+    "annualization_sessions": 252
+  },
+  "garch_forecast_evaluation": {
+    "variance_proxy": "next-session squared log return",
+    "metrics": [
+      "QLIKE",
+      "variance_MSE",
+      "volatility_RMSE_vs_absolute_return"
+    ]
+  },
+  "interpretation_guardrails": [
+    "GARCH is a risk overlay, not a source of directional alpha.",
+    "The simulation uses genuine saved OOS directional probabilities only.",
+    "No model, threshold, transaction cost, or GARCH parameter is tuned on 2025 or 2026 simulation outcomes.",
+    "Active total return is a descriptive difference from benchmark cumulative return, not Jensen alpha.",
+    "Simulation results are not live-trading evidence."
+  ]
+}
