@@ -62,7 +62,7 @@ Target distribution among the 907 labeled sessions:
 |---|---|---:|
 | 2023 | initial training | 221 |
 | 2024 | monthly expanding validation | 242 |
-| 2025 | untouched holdout | 223 |
+| 2025 | designated holdout | 223 |
 | 2026 | temporal robustness | 181 |
 
 The 2024 validation period contains 12 expanding monthly folds per model.
