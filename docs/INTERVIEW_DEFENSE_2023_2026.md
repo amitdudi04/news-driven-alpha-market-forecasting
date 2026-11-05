@@ -4,7 +4,7 @@
 
 I studied whether China-focused financial-news sentiment adds **incremental next-session forecasting information** for the CSI 300 beyond market variables.
 
-The main methodological issue was timing. I reconstructed 2023-2026 GDELT headline data, scored it with FinBERT, and assigned every headline to the first CSI 300 close after its GDELT seen timestamp using a 15:00 Shanghai cutoff. I then compared market-only and market-plus-sentiment logistic regression and XGBoost models under a frozen chronological design: 2023 training, 2024 expanding validation, untouched 2025 holdout, and locked-model 2026 robustness.
+The main methodological issue was timing. I reconstructed 2023-2026 GDELT headline data, scored it with FinBERT, and assigned every headline to the first CSI 300 close after its GDELT seen timestamp using a 15:00 Shanghai cutoff. I then compared market-only and market-plus-sentiment logistic regression and XGBoost models under the recorded chronological protocol: 2023 training, 2024 expanding validation, a designated 2025 holdout excluded from training, and locked-model 2026 robustness.
 
 The result is mixed. Sentiment sometimes improves forecasts, most notably XGBoost in 2026, but paired block-bootstrap intervals still include zero, so I do not claim statistically resolved sentiment alpha.
 
