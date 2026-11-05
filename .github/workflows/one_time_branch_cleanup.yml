@@ -1,0 +1,56 @@
+name: One-time verified branch consolidation
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  delete-redundant-references:
+    if: "github.event.head_commit.message == 'chore: finish single-main News Alpha [cleanup-once]'"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install verification packages
+        run: python -m pip install pandas numpy scipy statsmodels scikit-learn arch
+      - name: Verify corrected research and published outputs
+        run: |
+          python -m unittest discover -s tests -v
+          python scripts/validate_repository.py
+          python scripts/verify_published_results.py
+      - name: Preserve alternative cleanup history and delete redundant branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          old_main=dcc2c8a13c174cd5bee48af6c80c7f00e6507ecd
+          alternative=b0e347303be3c07de381c3fd10e75151d3e205b0
+          historical=d7f6c2e1f28c5b39d32100535ae6d04d71cf8f3b
+          main_tree=$(gh api "repos/${GITHUB_REPOSITORY}/git/commits/${old_main}" --jq '.tree.sha')
+          alternate_tree=$(gh api "repos/${GITHUB_REPOSITORY}/git/commits/${alternative}" --jq '.tree.sha')
+          test "$main_tree" = "$alternate_tree"
+          git merge-base --is-ancestor "$old_main" HEAD
+          git merge-base --is-ancestor "$historical" HEAD
+          current_alternative=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/admissions-final-cleanup" --jq '.object.sha')
+          current_historical=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/historical/pre-cleanup-news-alpha" --jq '.object.sha')
+          test "$current_alternative" = "$alternative"
+          test "$current_historical" = "$historical"
+          # One unique but tree-identical cleanup commit must remain reachable.
+          archive_ref=refs/tags/archive-news-alpha-alternate-cleanup-2026
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/archive-news-alpha-alternate-cleanup-2026" >/dev/null 2>&1; then
+            echo "Archive tag already exists. Refusing to change it."
+            exit 1
+          fi
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" -f "ref=$archive_ref" -f "sha=$alternative"
+          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/admissions-final-cleanup"
+          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/historical/pre-cleanup-news-alpha"
+          gh api "repos/${GITHUB_REPOSITORY}/branches" --jq '.[].name'
