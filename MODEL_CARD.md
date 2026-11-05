@@ -23,7 +23,7 @@ The one no-news research session, 20 Jun 2025, retains missing sentiment rather 
 |---|---|---:|
 | 2023 | initial training | 221 |
 | 2024 | monthly expanding validation | 242 |
-| 2025 | untouched holdout | 223 |
+| 2025 | designated holdout | 223 |
 | 2026 | temporal robustness | 181 |
 
 Partitioning uses `target_session_date`, which prevents year-end predictor rows from crossing the intended train/holdout boundary through a next-year target.
@@ -100,7 +100,7 @@ The 2025 holdout result is mixed.
 - Logistic + sentiment improves balanced accuracy but slightly worsens Brier score and log loss.
 - XGBoost + sentiment improves Brier score, log loss, and ROC AUC while slightly reducing balanced accuracy.
 
-Under the frozen paired block-bootstrap design, the principal 2025 incremental intervals include zero.
+Under the recorded paired block-bootstrap design, the principal 2025 incremental intervals include zero.
 
 ## 2026 temporal robustness
 
@@ -161,7 +161,7 @@ GARCH is used only for position scaling.
 - transaction cost = 10 bps per unit turnover
 - zero risk-free rate for reported Sharpe
 
-These values are fixed research conventions, not optimized trading parameters.
+These values are recorded research conventions, not economically optimized trading parameters. Same-close entry after observing closing information is an unverified execution assumption.
 
 ## Limitations
 
