@@ -58,10 +58,10 @@ The split is based on the year of the **target session**, not the feature-row ye
 
 - 2023: 221 initial training targets
 - 2024: 242 targets in 12 monthly expanding validation folds
-- 2025: 223 untouched holdout targets
+- 2025: 223 designated holdout targets
 - 2026: 181 temporal robustness targets
 
-The split, feature sets, candidate grids, probability threshold, and metric rules were frozen before model fitting.
+The split, feature sets, candidate grids, probability threshold, and metric rules are recorded in configuration. Independent contemporaneous preregistration or complete holdout-noninspection evidence is not publicly available.
 
 ### 5. Models and results
 
@@ -72,7 +72,7 @@ I compare four models:
 - XGBoost market-only;
 - XGBoost market + sentiment.
 
-In the 2025 untouched holdout, the result is mixed.
+In the designated 2025 holdout, the result is mixed.
 
 Logistic + sentiment improves balanced accuracy from about 48.3% to 51.3%, but slightly worsens Brier score and log loss.
 
@@ -132,9 +132,9 @@ Because the research question is incremental information. Without the paired mar
 
 A predictor row at year-end can forecast a return whose target session is in January of the next year. Partitioning by target date prevents a boundary observation from leaking across the intended train/holdout split.
 
-### Why was 2025 untouched?
+### How was the 2025 holdout separated?
 
-I used 2024 for model selection and chronological validation. Holding 2025 untouched gives a cleaner estimate of generalization after the model specification is fixed.
+The released modeling code uses 2024 for model selection and excludes 2025 from fitting. This supports a chronological holdout design, although external preregistration and absence of prior inspection cannot be independently proven from the public release.
 
 ### Why did you not retrain on 2025 before testing 2026?
 
@@ -162,7 +162,7 @@ Financial time series can have serial dependence. Resampling contiguous 10-sessi
 
 ### Why 10-session blocks?
 
-The two-trading-week block length was frozen before the bootstrap analysis. It was not selected after observing which interval produced the preferred result.
+The recorded bootstrap specification uses ten-session blocks, with consistent settings across reported comparisons. Independently dated evidence of when the block length was selected is not included.
 
 ### Was the sentiment improvement statistically resolved in the 2025 holdout?
 
@@ -210,7 +210,7 @@ Not consistently. The XGBoost + sentiment fixed-rule simulation underperformed t
 
 ### Is "active return" Jensen alpha?
 
-No. Here active-return difference is simply strategy cumulative return minus benchmark cumulative return. Jensen alpha would require an explicit asset-pricing regression.
+No. Here active-return difference is simply strategy cumulative return minus benchmark cumulative return. Jensen alpha would require an explicit asset-pricing regression. The close-to-close return assumption also uses a price that is not established to be executable after the closing features become observable.
 
 ### What would you improve next?
 
