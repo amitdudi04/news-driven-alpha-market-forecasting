@@ -66,6 +66,12 @@ The study covers one equity index, one news-source construction, one sentiment m
 
 Results may differ in other markets, languages, data sources, or time periods.
 
-## 12. Interpretation boundary
+## 12. Experimental chronology and execution assumptions
+
+The public configuration declares that experiment specifications were frozen before model fitting, but independently dated preregistration evidence or proof of complete noninspection of the 2025 holdout is unavailable. The released code uses chronological validation and excludes 2025 and 2026 from the final model fit; this is a verified implementation property, not external certification of blindness.
+
+The study observes features at the 15:00 Shanghai market close, then uses the next close-to-close index return for its simulated strategy. Realistic entry at the same closing price after observing closing features has not been demonstrated. The strategy is an idealized signal-based return calculation, not a next-executable-price backtest.
+
+## 13. Interpretation boundary
 
 The project does not establish causality, Jensen alpha, guaranteed trading profitability, or persistence outside the studied sample.
