@@ -1,4 +1,6 @@
-# Project Limitations
+# Research Limitations and Validity Boundaries
+
+This document distinguishes limitations of information availability, statistical inference, data reconstruction, and economic implementation. These qualifications apply to all numerical findings in [Results](RESULTS.md) and do not disappear when the repository's tests pass.
 
 ## 1. News-source coverage
 

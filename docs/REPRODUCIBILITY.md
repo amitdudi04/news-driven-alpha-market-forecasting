@@ -1,4 +1,6 @@
-# Reproducibility
+# Reproducibility and Evidence
+
+The steps below document the historical workflow rather than certify that a fresh download can reproduce the same archived information vintage. For the research definitions see [Methodology](METHODOLOGY.md); for the reported output tables see [Results](RESULTS.md).
 
 This document describes the cleaned 2023-2026 historical research workflow.
 
@@ -168,6 +170,7 @@ The dashboard reads generated local artifacts when available and falls back to c
 ```bash
 python -m unittest discover -s tests -v
 python scripts/validate_repository.py
+python scripts/verify_published_results.py
 ```
 
 CI runs compile checks, methodology tests, repository validation, and independent reconciliation of the tracked prediction, GARCH and strategy outputs. The reported 5,000-draw bootstrap interval endpoints cannot be independently regenerated from the compact public snapshot because individual bootstrap draws are not tracked.

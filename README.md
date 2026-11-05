@@ -188,7 +188,7 @@ SECURITY.md
 requirements.txt
 
 config/                 frozen experiment and simulation specifications
-docs/                   research design, data, results, limitations, reproducibility
+docs/                   four principal academic research documents
 src/data_pipeline/      historical GDELT and FinBERT implementation utilities
 src/utils/              shared helpers
 scripts/                release/repository validation
@@ -236,23 +236,21 @@ Run release validation:
 ```bash
 python -m unittest discover -s tests -v
 python scripts/validate_repository.py
+python scripts/verify_published_results.py
 ```
 
 A fresh clone uses the compact tracked files under `results/` for the principal OOS, calibration, uncertainty, GARCH, and simulation evidence. Large historical datasets, fitted model binaries, bootstrap draws, and full simulation paths remain local/generated.
 
-## Documentation
+## Research documentation
 
-- [Research Scope](docs/RESEARCH_SCOPE.md)
-- [Data Card](docs/DATA_CARD.md)
-- [Data Dictionary](docs/DATA_DICTIONARY.md)
-- [Experiment Design](docs/EXPERIMENT_DESIGN.md)
-- [Results](docs/RESULTS.md)
-- [Limitations](docs/LIMITATIONS.md)
-- [Reproducibility](docs/REPRODUCIBILITY.md)
-- [Interview Defense Guide](docs/INTERVIEW_DEFENSE_2023_2026.md)
-- [Model Card](MODEL_CARD.md)
-- [Academic Disclosure](ACADEMIC_DISCLOSURE.md)
-- [Empirical Result Files](results/README.md)
+Four complementary academic documents provide the complete study without duplicating research chapters:
+
+1. [Methodology](docs/METHODOLOGY.md) — research question, news and market sources, timing controls, variables, estimation, split design, bootstrap and financial evaluation.
+2. [Results](docs/RESULTS.md) — complete empirical comparisons, predictive uncertainty, calibration, GARCH forecasts and simulation findings.
+3. [Limitations](docs/LIMITATIONS.md) — constraints on causal timing, preregistration, statistical inference, trade implementation and external validity.
+4. [Reproducibility](docs/REPRODUCIBILITY.md) — exact workflow, dependencies, published evidence and unavailable upstream inputs.
+
+For supplementary machine-readable specifications and supporting context, see the [model card](MODEL_CARD.md), [academic disclosure](ACADEMIC_DISCLOSURE.md), and [results index](results/README.md). The previous separately maintained data, design and interview notes remain available in Git history; their substantive methodological definitions have been consolidated into the methodology document.
 
 ## Interpretation guardrails
 

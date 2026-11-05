@@ -1,4 +1,6 @@
-# Results
+# Empirical Results
+
+This report presents the recorded numerical findings for market-only and market-plus-sentiment CSI 300 forecasts, paired predictive uncertainty, the separate GARCH risk overlay and an illustrative transaction-cost simulation. All comparisons refer to the saved results in [`results/`](../results/); they do not establish causal news effects or executable trading alpha. See [Methodology](METHODOLOGY.md) for analytical definitions and [Limitations](LIMITATIONS.md) for interpretation boundaries.
 
 ## 1. Sample
 
@@ -132,7 +134,7 @@ Calibration slopes are generally below 1, so the directional probabilities shoul
 
 ## 7. Paired moving-block-bootstrap uncertainty
 
-Frozen settings:
+Recorded settings:
 
 - 5,000 replications;
 - 10-session circular blocks;
