@@ -26,10 +26,10 @@ Partitioning is based on `target_session_date`, not predictor-row calendar year.
 |---|---|---:|
 | 2023 | initial training | 221 |
 | 2024 | chronological validation | 242 |
-| 2025 | untouched holdout | 223 |
+| 2025 | designated holdout | 223 |
 | 2026 | locked-model temporal robustness | 181 |
 
-The exact split and candidate grids are stored in `config/directional_experiment_2023_2026.json` and were frozen before model fitting.
+The exact split and candidate grids are recorded in `config/directional_experiment_2023_2026.json`. The released code excludes 2025 from fitting and model selection, but independently dated preregistration or complete noninspection evidence is not publicly available.
 
 ## 2024 validation procedure
 
@@ -97,7 +97,7 @@ The candidate grid uses shallow, regularized trees. Both variants select:
 
 After candidate selection, each model is fitted once on all eligible 2023-2024 observations.
 
-- 2025 is used for untouched holdout evaluation.
+- 2025 is the designated holdout evaluation, excluded from released fitting.
 - 2026 uses the same 2023-2024 fitted model without retraining on 2025.
 
 This provides a separate temporal robustness check.
@@ -143,4 +143,4 @@ GARCH(1,1):
 - scales position size only;
 - does not generate direction probabilities.
 
-The fixed transaction-cost simulation uses saved out-of-sample directional probabilities and the conventions stored in `config/garch_simulation_spec.json`.
+The fixed transaction-cost simulation uses saved out-of-sample directional probabilities and the conventions stored in `config/garch_simulation_spec.json`. It assumes that positions selected using close-of-session information can earn the next close-to-close return. Execution at that same observed closing price is not demonstrated, and no next-open execution sensitivity is provided.
