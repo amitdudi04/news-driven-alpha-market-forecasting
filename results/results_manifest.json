@@ -36,5 +36,15 @@
     "garch_forecast_metrics.csv",
     "simulation_metrics.csv",
     "paired_simulation_comparison.csv"
-  ]
+  ],
+  "post_snapshot_correction": {
+    "correction_commit": "58e7d2fa160e0a2e910f4b0dab563e6c5b88412d",
+    "scope": "Financial risk reporting only; no retraining or changes to directional predictions, GARCH or bootstrap estimates.",
+    "reason": "Maximum drawdown must include initial unit wealth in the running peak.",
+    "affected_results": [
+      "simulation_metrics.csv: xgboost_market_only, 2026_robustness, unscaled, net_max_drawdown",
+      "paired_simulation_comparison.csv: xgboost, 2026_robustness, unscaled, sentiment_minus_market_max_drawdown"
+    ],
+    "verification": "scripts/verify_published_results.py"
+  }
 }
