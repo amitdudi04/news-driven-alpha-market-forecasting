@@ -10,7 +10,7 @@ The evidence is mixed rather than uniformly positive.
 
 - The strict modeling sample contains **867** fully usable session/target rows.
 - Hyperparameters are selected using **2024 monthly expanding-window validation only**.
-- **2025 (223 targets)** is the untouched holdout.
+- **2025 (223 targets)** is the designated holdout (excluded from the model-selection and fitting procedures in the released code).
 - **2026 (181 targets)** is a locked-model temporal robustness period using the same 2023-2024 final fit.
 - In 2025, sentiment improves some metrics but worsens or leaves others unchanged.
 - The strongest point result appears for **XGBoost in 2026**, where balanced accuracy rises from **50.20% to 55.68%** and Brier score improves from **0.25310 to 0.25017**.
@@ -93,10 +93,10 @@ Partitioning is based on **target_session_date**, not predictor-row calendar yea
 |---|---|---:|
 | 2023 | initial training | 221 |
 | 2024 | 12 monthly expanding validation folds | 242 |
-| 2025 | untouched holdout | 223 |
+| 2025 | designated holdout | 223 |
 | 2026 | locked-model temporal robustness | 181 |
 
-The experiment specification was frozen before fitting.
+The repository records a fixed model-selection specification and chronological split. Independent contemporaneous preregistration evidence is not available in the public release; the 2025 holdout designation reflects the implemented protocol.
 
 Principal models:
 
@@ -176,7 +176,7 @@ For XGBoost + sentiment with GARCH scaling:
 
 "Active-return difference" is only cumulative strategy return minus cumulative benchmark return. It is **not Jensen alpha**.
 
-The simulation is historical research, not evidence of live-capital profitability.
+The simulation is an idealized close-to-close calculation. Closing-price features are observed at the Shanghai market close, but execution at that same close after the features are known has not been demonstrated. Market impact, borrowing, financing and other real-world frictions are not fully included. The simulation is not evidence of live-capital profitability.
 
 ## Repository structure
 
