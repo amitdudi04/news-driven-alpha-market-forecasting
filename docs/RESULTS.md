@@ -87,7 +87,7 @@ Selected specifications:
 
 Development evidence is mixed.
 
-### 2025 untouched holdout
+### 2025 designated holdout
 
 | Model | Balanced accuracy | Accuracy | Brier | Log loss | ROC AUC |
 |---|---:|---:|---:|---:|---:|
@@ -220,13 +220,15 @@ The GARCH scale generally reduces exposure during higher forecast-volatility per
 
 The historical reconstruction changes the project from a short feasibility exercise into a multi-year timestamp-safe OOS study with:
 
-- an untouched 2025 holdout;
+- a designated 2025 holdout excluded from fitting under the published protocol;
 - locked 2026 temporal robustness;
 - paired model-family ablations;
 - calibration diagnostics;
 - block-bootstrap uncertainty;
 - a separate GARCH volatility overlay;
 - a costed fixed-rule simulation.
+
+The 2026 unscaled XGBoost market-only maximum drawdown was corrected from −9.76% to **−9.90%**, accounting for the initial unit wealth. The associated sentiment-minus-market drawdown comparison is **−2.65 percentage points**. All saved forecast probabilities and classification scores remain unchanged. Economic figures continue to assume idealized same-close execution after observing closing features; see [Limitations](LIMITATIONS.md).
 
 The central result remains cautious:
 
