@@ -265,4 +265,4 @@ This project does **not** claim:
 - persistence outside the studied period;
 - perfectly calibrated directional probabilities.
 
-Null and negative results are retained rather than optimized away.
+Null and negative results are retained rather than optimized away. The compact public evidence is independently checked in CI against the published numerical tables.
