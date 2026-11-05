@@ -2,7 +2,7 @@
 
 This repository studies whether China-focused financial-news sentiment adds incremental next-session forecasting information for the CSI 300 beyond market-only predictors.
 
-The final research design is a timestamp-safe, multi-year out-of-sample study with paired market-only versus market-plus-sentiment models, calibration diagnostics, paired moving-block-bootstrap uncertainty, a separate GARCH(1,1) volatility overlay, and a fixed-rule transaction-cost simulation.
+The implemented research design is a seen-time-aligned, multi-year chronological forecasting study with paired market-only versus market-plus-sentiment models, calibration diagnostics, paired moving-block-bootstrap uncertainty, a separate GARCH(1,1) volatility overlay, and a fixed-rule transaction-cost simulation.
 
 ## Main finding
 
@@ -13,9 +13,9 @@ The evidence is mixed rather than uniformly positive.
 - **2025 (223 targets)** is the designated holdout (excluded from the model-selection and fitting procedures in the released code).
 - **2026 (181 targets)** is a locked-model temporal robustness period using the same 2023-2024 final fit.
 - In 2025, sentiment improves some metrics but worsens or leaves others unchanged.
-- The strongest point result appears for **XGBoost in 2026**, where balanced accuracy rises from **50.20% to 55.68%** and Brier score improves from **0.25310 to 0.25017**.
+- The largest observed balanced-accuracy point improvement appears for **XGBoost in 2026**, where balanced accuracy rises from **50.20% to 55.68%** and Brier score improves from **0.25310 to 0.25017**.
 - The paired 10-session moving-block-bootstrap 95% interval for that balanced-accuracy improvement is approximately **[-0.20, +11.83] percentage points**, so the improvement is not statistically resolved at the 95% level.
-- A resolved negative development result is also retained: in 2024 logistic validation, sentiment worsens Brier score and log loss under the frozen bootstrap design.
+- A statistically resolved adverse development finding is retained: in 2024 logistic validation, sentiment worsens Brier score and log loss under the recorded paired-bootstrap specification.
 
 The defensible conclusion is:
 
@@ -85,7 +85,7 @@ Missing sentiment is not neutralized. The one genuine no-news research session, 
 
 The target is the return sign of the next genuine CSI 300 trading session. Of 908 sessions, **907** have a known next-session target and **867** satisfy the strict full-feature modeling rule.
 
-## Frozen experiment
+## Recorded chronological experiment
 
 Partitioning is based on **target_session_date**, not predictor-row calendar year.
 
@@ -107,7 +107,7 @@ Principal models:
 
 The research question is the **incremental value of sentiment within the same model family**, not whether a flexible model can predict the market in isolation.
 
-## Genuine OOS results
+## Chronologically evaluated predictive results
 
 ### 2025 holdout
 
@@ -155,7 +155,7 @@ This is suggestive, not statistically resolved.
 
 GARCH(1,1) is estimated separately from the directional models. It forecasts next-session volatility for risk scaling only; it does not determine direction.
 
-Frozen simulation conventions:
+Recorded simulation conventions:
 
 - p(up) >= 0.55 -> long
 - p(up) <= 0.45 -> short
@@ -187,7 +187,7 @@ ACADEMIC_DISCLOSURE.md
 SECURITY.md
 requirements.txt
 
-config/                 frozen experiment and simulation specifications
+config/                 recorded experiment and simulation specifications
 docs/                   four principal academic research documents
 src/data_pipeline/      historical GDELT and FinBERT implementation utilities
 src/utils/              shared helpers

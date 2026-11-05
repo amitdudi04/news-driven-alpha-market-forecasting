@@ -1,12 +1,12 @@
 # Research Methodology
 
 **Study:** Incremental predictive information from financial-news sentiment for CSI 300 returns  
-**Empirical horizon:** 2023–2026; 2022 market-history warm-up  
+**Empirical horizon:** January 2023–September 2026 for completed market sessions; 2022 market-history warm-up. News observations extend into October 2026 but are not assigned to later completed market closes.  
 **Unit:** One CSI 300 trading session
 
 ## Research question and analytical design
 
-This study tests whether China-focused financial-news sentiment improves the next-session **directional forecast** for the CSI 300 relative to market-only information. Each market-plus-sentiment model is compared with its matching market-only model **within the same model family**. The four principal specifications comprise logistic regression and XGBoost, each fitted with and without news-sentiment variables. Calibration and paired uncertainty analyses assess the directional predictions; GARCH(1,1) forecasts and a costed position simulation are **separate** risk and economic experiments.
+This study examines whether China-focused financial-news sentiment adds incremental predictive information about the next-session **return direction** for the CSI 300 relative to market-only information. Each market-plus-sentiment model is compared with its matching market-only model **within the same model family**. The four principal specifications comprise logistic regression and XGBoost, each fitted with and without news-sentiment variables. Calibration and paired uncertainty analyses assess the directional predictions; GARCH(1,1) forecasts and a costed position simulation are **separate** risk and economic experiments.
 
 ## Data sources, measurement and timing
 
@@ -33,7 +33,7 @@ After-close, weekend and holiday items are carried **forward** to the next tradi
 | Shanghai-date mismatches | 0 |
 | Session-window timing violations | 0 |
 
-A recorded absence of news is **not** a neutral sentiment signal. The no-news session of **20 June 2025** retains missing sentiment rather than artificial zero sentiment.
+A recorded absence of news is **not** evidence of neutral sentiment. The no-news session of **20 June 2025** retains missing sentiment rather than artificial zero sentiment.
 
 ## Feature engineering and target
 
@@ -56,7 +56,7 @@ Within each 2024 validation fold, the training observations have target dates **
 
 The logistic model uses L2 regularization with `lbfgs` and a candidate `C` grid of **0.1, 1, 10**; both variants selected **0.1**. Both selected XGBoost variants use **150 trees**, maximum depth **2**, learning rate **0.03**, minimum child weight **5**, row and column subsampling of **0.9**, L2 regularization **5**, and L1 regularization **0**.
 
-The final selected models are fitted on eligible **2023–2024** data and applied **without refitting on 2025** to the 2025 and 2026 periods. The released code supports this chronological separation. The configuration declares a pre-fitting specification freeze, but independent contemporaneous preregistration evidence and complete noninspection of 2025 are **not established publicly**.
+After 2024 validation-based model selection, the selected models are fitted on eligible **2023–2024** data and applied **without refitting on 2025** to the 2025 and 2026 periods. The released code supports this chronological separation. The configuration declares a pre-fitting specification freeze, but independent contemporaneous preregistration evidence and complete noninspection of 2025 are **not established publicly**.
 
 ## Predictive evaluation and statistical inference
 

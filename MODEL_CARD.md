@@ -129,7 +129,7 @@ Directional probabilities should therefore be treated as forecast scores rather 
 
 ## Bootstrap uncertainty
 
-The frozen paired moving-block bootstrap uses:
+The recorded paired moving-block-bootstrap specification uses:
 
 - 10-session blocks;
 - 5,000 resamples;
@@ -176,7 +176,7 @@ These values are recorded research conventions, not economically optimized tradi
 
 ## Reproducibility
 
-The frozen split, features, candidate grids, and evaluation settings are stored in:
+The recorded split, features, candidate grids, and evaluation settings are stored in:
 
 - `config/directional_experiment_2023_2026.json`
 - `config/oos_uncertainty_spec.json`

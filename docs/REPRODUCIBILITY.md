@@ -2,8 +2,6 @@
 
 The steps below document the historical workflow rather than certify that a fresh download can reproduce the same archived information vintage. For the research definitions see [Methodology](METHODOLOGY.md); for the reported output tables see [Results](RESULTS.md).
 
-This document describes the cleaned 2023-2026 historical research workflow.
-
 Large raw datasets and fitted model binaries are intentionally not tracked. Compact empirical evidence is published under `results/`. A fresh clone can audit released forecasts and metrics, but full original-fit reproduction needs the original data vintages, news records and pretrained model environment, which are not guaranteed to be recoverable from public sources.
 
 ## 1. Environment
@@ -95,7 +93,7 @@ The master table combines market variables, session-unique FinBERT sentiment, ro
 
 ## 6. Directional experiment
 
-Frozen specification:
+Recorded experiment specification:
 
 ```text
 config/directional_experiment_2023_2026.json
@@ -125,7 +123,7 @@ Principal models:
 
 ## 7. OOS uncertainty and calibration
 
-Frozen specification:
+Recorded uncertainty specification:
 
 ```text
 config/oos_uncertainty_spec.json
@@ -141,7 +139,7 @@ Outputs include calibration diagnostics and the paired 5,000-replication, 10-ses
 
 ## 8. GARCH risk overlay and transaction simulation
 
-Frozen specification:
+Recorded risk-simulation specification:
 
 ```text
 config/garch_simulation_spec.json

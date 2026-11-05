@@ -115,7 +115,7 @@ The 2026 evaluation uses the same 2023-2024 fitted models; 2025 is not added to 
 | XGBoost market | 0.5020 | 0.5028 | 0.2531 | 0.6992 | 0.5424 |
 | XGBoost + sentiment | **0.5568** | **0.5580** | **0.2502** | **0.6935** | **0.5458** |
 
-The strongest point evidence appears for XGBoost + sentiment in 2026.
+The largest observed balanced-accuracy gain appears for XGBoost with sentiment in 2026; the corresponding confidence interval includes zero, so this is not statistically resolved evidence of incremental information.
 
 ## 6. Calibration
 
@@ -195,7 +195,7 @@ GARCH is a risk overlay only; it does not generate direction probabilities.
 
 ## 9. Fixed-rule transaction-cost simulation
 
-Frozen conventions:
+Recorded simulation conventions:
 
 - long if p(up) >= 0.55;
 - short if p(up) <= 0.45;
@@ -216,11 +216,11 @@ Frozen conventions:
 
 "Active-return difference" is the strategy's cumulative net return minus the benchmark's cumulative return. It is not Jensen alpha.
 
-The GARCH scale generally reduces exposure during higher forecast-volatility periods. Return effects vary across periods.
+The GARCH overlay scales exposure according to estimated volatility; the simulated return effects differ across periods. These modeled positions assume same-close execution after observing close-based features, which has not been established as achievable.
 
 ## 10. Conclusion
 
-The historical reconstruction changes the project from a short feasibility exercise into a multi-year timestamp-safe OOS study with:
+The evaluated research design comprises:
 
 - a designated 2025 holdout excluded from fitting under the published protocol;
 - locked 2026 temporal robustness;
@@ -232,6 +232,6 @@ The historical reconstruction changes the project from a short feasibility exerc
 
 The 2026 unscaled XGBoost market-only maximum drawdown was corrected from −9.76% to **−9.90%**, accounting for the initial unit wealth. The associated sentiment-minus-market drawdown comparison is **−2.65 percentage points**. All saved forecast probabilities and classification scores remain unchanged. Economic figures continue to assume idealized same-close execution after observing closing features; see [Limitations](LIMITATIONS.md).
 
-The central result remains cautious:
+The central empirical interpretation is:
 
 > Sentiment sometimes improves CSI 300 directional forecasts and fixed-rule simulated performance, especially for XGBoost in 2026, but the incremental directional effects are not statistically resolved at the 95% block-bootstrap level. The evidence supports a mixed incremental-information conclusion, not a durable-alpha claim.

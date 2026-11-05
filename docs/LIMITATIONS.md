@@ -22,7 +22,7 @@ Normalized-title duplicates are removed within each assigned trading-session win
 
 ## 5. Missing news
 
-The no-news research session remains missing for sentiment features. Complete-window rolling features therefore lose additional observations around that date.
+The observed no-news research session has missing sentiment values rather than an assumed neutral score. Complete-window rolling features therefore lose additional observations around that date.
 
 ## 6. Model scope
 
@@ -37,7 +37,7 @@ The strict model-ready sample contains **867** observations:
 - 223 target-year 2025 rows;
 - 181 target-year 2026 rows.
 
-Principal 2025 and 2026 paired bootstrap intervals for incremental sentiment effects include zero.
+The principal 2025 and 2026 paired-bootstrap confidence intervals for incremental sentiment effects include zero. These pointwise intervals also do not fully account for selection across models, metrics and evaluation periods.
 
 ## 8. Probability calibration
 
