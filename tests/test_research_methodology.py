@@ -397,6 +397,16 @@ class SimulationAccountingTests(unittest.TestCase):
             places=12,
         )
 
+    def test_drawdown_includes_initial_unit_wealth(self):
+        from evaluate_garch_risk_overlay import max_drawdown
+
+        # A loss before any new high must count against the starting capital.
+        self.assertAlmostEqual(max_drawdown(pd.Series([0.98, 0.99])), -0.02)
+        self.assertAlmostEqual(
+            max_drawdown(pd.Series([0.98, 1.02, 0.95])),
+            0.95 / 1.02 - 1.0,
+        )
+
     def test_simulation_period_starts_from_flat_position(self):
         frame = pd.DataFrame(
             {

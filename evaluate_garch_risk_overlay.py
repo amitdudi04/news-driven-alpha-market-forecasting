@@ -267,8 +267,10 @@ def garch_metrics(
 
 
 def max_drawdown(wealth: pd.Series) -> float:
-    peak = wealth.cummax()
-    return float(((wealth - peak) / peak).min())
+    """Measure drawdown against the initial unit wealth as well as later peaks."""
+    values = np.r_[1.0, wealth.to_numpy(dtype=float)]
+    peaks = np.maximum.accumulate(values)
+    return float(np.min(values / peaks - 1.0))
 
 
 def sharpe_zero_rf(series: pd.Series) -> float:
