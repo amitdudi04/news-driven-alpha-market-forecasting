@@ -2,7 +2,7 @@
 
 This document describes the cleaned 2023-2026 historical research workflow.
 
-Large raw datasets and fitted model binaries are intentionally not tracked. Compact empirical evidence is published under `results/`.
+Large raw datasets and fitted model binaries are intentionally not tracked. Compact empirical evidence is published under `results/`. A fresh clone can audit released forecasts and metrics, but full original-fit reproduction needs the original data vintages, news records and pretrained model environment, which are not guaranteed to be recoverable from public sources.
 
 ## 1. Environment
 
@@ -111,7 +111,7 @@ The split is:
 
 - 2023 target sessions: initial training;
 - 2024 target sessions: 12 monthly expanding validation folds;
-- 2025 target sessions: untouched holdout;
+- 2025 target sessions: designated holdout excluded from the released fitting procedure;
 - 2026 target sessions: temporal robustness using the same 2023-2024 fit.
 
 Principal models:
@@ -170,7 +170,7 @@ python -m unittest discover -s tests -v
 python scripts/validate_repository.py
 ```
 
-CI runs compile checks, methodology tests, and repository validation.
+CI runs compile checks, methodology tests, repository validation, and independent reconciliation of the tracked prediction, GARCH and strategy outputs. The reported 5,000-draw bootstrap interval endpoints cannot be independently regenerated from the compact public snapshot because individual bootstrap draws are not tracked.
 
 ## Published versus local artifacts
 
