@@ -38,6 +38,6 @@ The 2025 holdout results are mixed. The 2026 XGBoost sentiment specification sho
 
 The study therefore reports model- and period-specific incremental effects rather than a universal sentiment effect.
 
-The GARCH and simulation sections are reported separately from the directional forecasting evidence.
+The GARCH and simulation sections are reported separately from the directional forecasting evidence. The released models exclude designated 2025 holdout outcomes from training, although independently dated preregistration is not established. The economic backtest uses idealized same-close entry after the closing features are observed and is not a verified executable-price simulation.
 
 No causal effect, Jensen alpha, guaranteed trading edge, or live-capital profitability is claimed.
