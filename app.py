@@ -126,7 +126,7 @@ st.caption(
 st.sidebar.header("Research status")
 st.sidebar.markdown(
     """**Directional experiment:** frozen and completed  
-**2025:** untouched holdout  
+**2025:** designated holdout  
 **2026:** locked-model robustness  
 **GARCH:** risk overlay only"""
 )
@@ -698,7 +698,8 @@ with tabs[4]:
         st.caption(
             "Simulation conventions are fixed: p>=0.55 long, p<=0.45 "
             "short, 10 bps per unit turnover, max |position|=1. "
-            "Results are historical research, not live-trading evidence."
+            "The backtest assumes idealized same-close entry after observing "
+            "closing information; live execution is not established."
         )
 
 
