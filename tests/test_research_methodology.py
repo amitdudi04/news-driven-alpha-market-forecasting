@@ -427,5 +427,12 @@ class SimulationAccountingTests(unittest.TestCase):
         )
 
 
+class PublishedResultsReconciliationTests(unittest.TestCase):
+    def test_tracked_prediction_risk_and_economic_tables_reconcile(self):
+        from scripts.verify_published_results import main as verify_published_results
+
+        verify_published_results()
+
+
 if __name__ == "__main__":
     unittest.main()
